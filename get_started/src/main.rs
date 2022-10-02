@@ -269,44 +269,190 @@ fn _let_13_file_system() {
     }
 }
 
-fn _let_14()  {
+fn _let_14() {
     const SPACE: u8 = b' ';
-    let example_string: String = String::from("hello world, mishko");
+    let example_string: String = String::from("hello world, TakiMoysha");
 
-    fn slice(s: &String) -> usize {
-        let bytes = s.as_bytes(); // string to bytes array
+    {
+        fn slice(s: &String) -> usize {
+            let bytes = s.as_bytes(); // string to bytes array
 
-        for (index, &item) in bytes.iter().enumerate() {
-            if item == SPACE {
-                return index;
+            for (index, &item) in bytes.iter().enumerate() {
+                if item == SPACE {
+                    return index;
+                }
             }
+
+            return s.len();
         }
-
-        return s.len();
-    }
-    let inx: usize = slice(&example_string);
-    if inx == 11 || inx == 5 {
-        println!("Space in {}", inx);
+        let inx: usize = slice(&example_string);
+        if inx == 11 || inx == 5 {
+            println!("Space in {}", inx);
+        }
     }
 
+    {
+        fn string_slice(s: &String) -> &str {
+            let bytes = s.as_bytes();
 
-    fn string_slice(s: &String) -> &str {
-        let bytes = s.as_bytes();
-
-        for (i, &item) in bytes.iter().enumerate() {
-            if item == SPACE {
-                return &s[0..i];
+            for (i, &item) in bytes.iter().enumerate() {
+                if item == SPACE {
+                    return &s[0..i];
+                }
             }
+            return &s[..];
         }
-        return &s[..];
+        let slice = string_slice(&example_string);
+        println!("StringSlice: {}", slice);
     }
-
-    let slice = string_slice(&example_string);
-    println!("StringSlice: {}", slice);
-
 }
 
+fn _let_15_struct() {
+    {
+        #[derive(Debug)]
+        struct Point {
+            x: f64,
+            y: f64,
+            z: f64,
+            active: bool,
+        }
+
+        const DEFAULT_ACTIVE: bool = false;
+
+        fn new_point(x: f64, y: f64, z: f64, active: bool) -> Point {
+            return Point { x, y, z, active };
+        }
+        fn new_default_point(x: f64, y: f64, z: f64) -> Point {
+            return Point { x, y, z, active: DEFAULT_ACTIVE };
+        }
+
+        let p1 = new_default_point(1.0, 2.0, 11.0);
+        let p2 = Point { x: 2.0, ..p1 };
+
+        println!("p1: {:#?}", p1);
+        println!("p2: {:#?}", p2);
+    }
+
+    {
+        struct User {
+            id: String,
+            username: String, // String т.к. это владеющий тип, каждый экземпляр должен владеть всеми своими данными
+            email: String,
+            active: bool,
+        }
+
+        struct UserRef<'id, 'username> {
+            ref_id: &'id str, // &str - хранит ссылку на данные, принадлежащие кому-то другому, смотри Rust Live time
+            username: &'username str,
+        }
+    }
+
+    {
+        struct AlwaysEqual;
+
+        let subject = AlwaysEqual; // instance of AlwaysEqual
+    }
+}
+
+fn _let_16_rectangle() {
+    fn _log(area: u32) {
+        println!("The area of the rectangle is {} square pixels.", area);
+    }
+
+    {
+        fn area(width: u32, height: u32) -> u32 {
+            return width * height;
+        }
+        let width1 = 30;
+        let height1 = 50;
+        _log(area(width1, height1));
+    }
+
+    {
+        fn area(dimensions: (u32, u32)) -> u32 {
+            return dimensions.0 * dimensions.1;
+        }
+        let rect_1 = (30, 50);
+        _log(area(rect_1));
+    }
+
+    {
+        struct Rectangle {
+            width: u32,
+            height: u32,
+        }
+
+        // не нужно передавать сам объект, т.к. тогда переменная перестанет им обладать
+        fn area(rectangle: &Rectangle) -> u32 {
+            return rectangle.height * rectangle.width;
+        }
+        let rect_2 = Rectangle { width: 10, height: 20 };
+        _log(area(&rect_2));
+    }
+
+    {
+        #[derive(Debug)]
+        struct Example {
+            x: i32,
+            y: i32,
+        }
+        let ex = Example { x: 10, y: 15 };
+        println!("{:?}", ex);
+        println!("{:#?}", ex);
+        dbg!(ex);
+    }
+}
+
+fn _let_17_methods() {
+    #[derive(Debug)]
+    struct Rectangle {
+        width: u32,
+        height: u32,
+    }
+    impl Rectangle {
+        // ------------ associated function
+        // ============ methods
+        fn area(self: &Self) -> u32 {
+            return self.width * self.height;
+        }
+        fn expand(&mut self, size: u32) {
+            self.width = self.width + size;
+            self.height = self.height + size;
+        }
+
+        fn can_hold(&self, rectangle: &Self) -> bool {
+            return self.width > rectangle.width && self.height > rectangle.height;
+        }
+        // ============
+
+        fn new(x: u32, y: u32) -> Self {
+            return Self { width: x, height: y };
+        }
+        fn square(size: u32) -> Self {
+            return Self { width: size, height: size };
+        }
+        // ------------
+    }
+
+    impl Rectangle {
+        fn width(&self) -> bool {
+            return self.width > 0;
+        }
+        fn height(&self) -> bool {
+            return self.height > 0;
+        }
+    }
+
+    let mut rect_1 = Rectangle { width: 30, height: 20 };
+    println!("The Area is {}", rect_1.area());
+    rect_1.expand(10);
+    println!("The Area is {}", rect_1.area());
+
+    let rect_2 = Rectangle::new(10, 20);
+
+    println!("rect_1 can hold rect_2 {}", rect_1.can_hold(&rect_2));
+}
 
 fn main() {
-    _let_14();
+    _let_17_methods();
 }
