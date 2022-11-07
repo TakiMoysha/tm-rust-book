@@ -453,6 +453,194 @@ fn _let_17_methods() {
     println!("rect_1 can hold rect_2 {}", rect_1.can_hold(&rect_2));
 }
 
+fn _let_18_enums() {
+    enum IpAddrKind {
+        V4,
+        V6,
+    }
+    let four = IpAddrKind::V4;
+    let six = IpAddrKind::V6;
+    fn route(ip_kind: IpAddrKind) {}
+    route(four);
+    route(six);
+
+    enum IpAddr1 {
+        V4(String),
+        V6(String),
+    }
+    let _home = IpAddr1::V4(String::from("127.0.0.1"));
+    let _loopback = IpAddr1::V6(String::from("::1"));
+
+    enum IpAddr2 {
+        V4(u8, u8, u8, u8),
+        V6(String),
+    }
+    let _home = IpAddr2::V4(127, 0, 0, 1);
+    let _loopback = IpAddr2::V6(String::from("::1"));
+
+    enum MyOption<T> {
+        None,
+        Some(T),
+    }
+    let some_number = Some(5);
+    assert_eq!(some_number.is_some(), true);
+    let some_char = Some('e');
+    assert_eq!(some_char.is_some(), true);
+    // let absent_number: MyOption<u32> = MyOption::from(None);
+    // assert_eq!(absent_number.is_some(), false);
+}
+
+fn _let_18_1_option() {
+    let x: Option<u32> = Some(2);
+    assert_eq!(x.is_some(), true);
+
+    let x: Option<u32> = None;
+    assert_eq!(x.is_none(), true);
+}
+
+fn _let_19_match() {
+    struct Cent(u8);
+    #[derive(Debug)]
+    enum UsState {
+        Alaska,
+        Alabama,
+    }
+    enum Coin {
+        Penny,
+        Nickel,
+        Dime,
+        Quarter(UsState),
+    }
+    fn value_in_cents(coin: Coin) -> Cent {
+        return match coin {
+            Coin::Penny => Cent(1),
+            Coin::Nickel => Cent(5),
+            Coin::Dime => Cent(10),
+            Coin::Quarter(state) => {
+                println!("Quarter state is {:?}", state);
+                Cent(25)
+            }
+        };
+    }
+    assert_eq!(value_in_cents(Coin::Penny).0, Cent(1).0);
+    assert_eq!(value_in_cents(Coin::Nickel).0, Cent(5).0);
+    assert_eq!(value_in_cents(Coin::Dime).0, Cent(10).0);
+    assert_eq!(value_in_cents(Coin::Quarter(UsState::Alabama)).0, Cent(25).0);
+
+    fn plus_one(x: Option<i32>) -> Option<i32> {
+        match x {
+            None => None,
+            Some(i) => Some(i + 1),
+        }
+    }
+    let five = Some(5);
+    let six = plus_one(five);
+    let none = plus_one(None);
+
+    let dice_roll = 9;
+    match dice_roll {
+        3 => (),
+        7 => {}
+        value => println!("{}", value),
+    }
+}
+
+fn _let_19_if_let() {
+    let config_max = Some(3u8);
+    let msg = "This maximum is configured to be";
+    match config_max {
+        Some(max) => println!("{} {}", msg, max),
+        _ => (),
+    }
+    if let Some(max) = config_max {
+        println!("{} {}", msg, max);
+    } else {
+        println!("It will not be written");
+    }
+}
+
+fn _let_20_same_name() {
+    use std::fmt;
+    use std::io;
+
+    // fn fun1() -> fmt::Result { ... }
+
+    // fn fun2() -> io::Result<()> { ... }
+
+    use std::io as IoResult;
+
+    // fn fun3() -> IoResult<()> { ... }
+}
+
+mod garden;
+fn _let_20_1_re_export() {
+    use garden::vegetables::Barn;
+
+    pub fn eat_at_restaurant() {
+        Barn::add_vegetables();
+    }
+}
+
+fn _let_20_2_external_packets() {
+    use rand::Rng;
+
+    let secret_number = rand::thread_rng().gen_range(1..=100);
+    println!("{:?}", secret_number);
+}
+
+fn _let_21_vector() {
+    let mut v: Vec<i32> = Vec::new();
+    v.push(2);
+    v.push(5);
+
+    let mut v2 = vec![1, 2, 3];
+    v2.push(99);
+
+    let third: Option<&i32> = v.get(2);
+    match third {
+        Some(third) => println!("The third element is {third}"),
+        None => {
+            println!("There is no third element");
+            v.push(102);
+        }
+    }
+
+    let third: &i32 = &v[2];
+    println!("The third element is {third}");
+
+    print!("[");
+    for i in &v2 {
+        print!("{i}, ");
+    }
+    println!("]");
+
+    for i in &mut v2 {
+        *i += 50;
+    }
+    println!("{v2:?}");
+
+    // Vec cat store the values of the same type
+    enum SpreadsheetCell {
+        Int(i32),
+        Float(f64),
+        Text(String)
+    }
+    let row = vec![
+        SpreadsheetCell::Int(3),
+        SpreadsheetCell::Text(String::from("Blue")),
+        SpreadsheetCell::Float(10.12)
+    ];
+}
+
+fn _let_22_string() {
+    let data = "Init content";
+    let string_data = String::from("Init content");
+    let s = data.to_string();
+    let s = "Init content".to_string();
+
+
+}
+
 fn main() {
-    _let_17_methods();
+    _let_22_string();
 }
