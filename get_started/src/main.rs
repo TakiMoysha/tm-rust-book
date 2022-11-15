@@ -638,9 +638,46 @@ fn _let_22_string() {
     let s = data.to_string();
     let s = "Init content".to_string();
 
+    let s = "Hello".chars();
+    for char in s {
+        print!("{}", char);
+    }
+    println!();
 
+    println!("{}", &data[0..8]);
+}
+
+fn _let_23_hashmap() {
+    use std::collections::HashMap;
+
+    struct CommandName(String);
+    struct CommandScore(i32);
+
+    let mut scores:HashMap<String, u32> = HashMap::new();
+    scores.insert(String::from("Yellow"), 50);
+    scores.insert(String::from("Blue"), 10);
+
+    let team_name = String::from("Blue");
+    let team_score = scores.get(&team_name).copied().unwrap_or(0);
+    println!("{} - {}", team_name, team_score);
+
+    let field_name = String::from("Favorite color");
+    let field_value = String::from("Blue");
+    let mut map = HashMap::new();
+    map.insert(field_name, field_value);
+    println!("{:?}", map);
+}
+
+fn _let_23_hashmap_exercise() {
+    let list = [51, 345, 83, 1, 4, 589, 32, 51];
+    // todo: search: average, median (after sort), mode of list
+
+    let my_string = String::from("This example string needs to be translated into pig latin.");
+    // todo: Первая согласная каждого слова перемещается в конец и к ней добавляется окончание "ay", так "first" станет "irst-fay". Слову, начинающемуся на гласную, в конец добавляется "hay" ("apple" становится "apple-hay").
+
+    // todo: create text-interface that allows the user to add employee names to company department name. "Add Sally to Engineering" or "Add Amir to Sales". Then let the user get a list of all people in a department, or all people in a company, sorted alphabetically by department.
 }
 
 fn main() {
-    _let_22_string();
+    _let_23_hashmap();
 }
