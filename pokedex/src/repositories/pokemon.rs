@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::domain::entities::{Pokemon, PokemonName, PokemonNumber, PokemonTypes};
+use crate::domain::entities::{ Pokemon, PokemonName, PokemonNumber, PokemonTypes };
 
 pub enum Insert {
     Ok(PokemonNumber),
@@ -8,14 +8,14 @@ pub enum Insert {
     Error,
 }
 
-pub trait Repository: Send + Sync {
-    fn insert(&self, number: PokemonNumber, name: PokemonName, types: PokemonTypes) -> Insert;
-}
-
-
 pub struct InMemoryRepository {
     error: bool,
     pokemons: Mutex<Vec<Pokemon>>,
+}
+
+pub enum InsertError {
+    Conflict,
+    Unknown,
 }
 
 impl InMemoryRepository {
@@ -27,6 +27,7 @@ impl InMemoryRepository {
         }
     }
 
+    #[cfg(test)]
     pub fn with_error(self) -> Self {
         Self {
             error: true,
@@ -35,23 +36,40 @@ impl InMemoryRepository {
     }
 }
 
+pub trait Repository: Send + Sync {
+    fn insert(
+        &self,
+        number: PokemonNumber,
+        name: PokemonName,
+        types: PokemonTypes
+    ) -> Result<Pokemon, InsertError>;
+}
+
 impl Repository for InMemoryRepository {
-    fn insert(&self, number: PokemonNumber, name: PokemonName, types: PokemonTypes) -> Insert {
+    fn insert(
+        &self,
+        number: PokemonNumber,
+        name: PokemonName,
+        types: PokemonTypes
+    ) -> Result<Pokemon, InsertError> {
         if self.error {
-            return Insert::Error;
+            return Err(InsertError::Unknown);
         }
 
         let mut lock = match self.pokemons.lock() {
             Ok(lock) => lock,
-            _ => return Insert::Error,
+            _ => {
+                return Err(InsertError::Unknown);
+            }
         };
 
         if lock.iter().any(|pokemon| pokemon.number == number) {
-            return Insert::Conflict;
+            return Err(InsertError::Conflict);
         }
 
         let number_clone = number.clone();
-        lock.push(Pokemon::new(number_clone, name, types));
-        Insert::Ok(number)
+        let pokemon = Pokemon::new(number_clone, name, types);
+        lock.push(pokemon.clone());
+        Ok(pokemon)
     }
 }

@@ -24,7 +24,7 @@ impl From<Status> for rouille::Response {
             status_code,
             headers: vec![],
             data: rouille::ResponseBody::empty(),
-            upgrade: None
+            upgrade: None,
         }
     }
 }
@@ -32,11 +32,11 @@ impl From<Status> for rouille::Response {
 pub fn serve(url: &str, repo: Arc<dyn Repository>) {
     rouille::start_server(url, move |req| {
         router!(req,
-            (POST) (/pokemon) => {
-                create_pokemon::serve(req, repo.clone())
-            },
             (GET) (/health) => {
                 health::serve()
+            },
+            (POST) (/) => {
+                create_pokemon::serve(req, repo.clone())
             },
             _ => {
                 rouille::Response::from(Status::NotFound)
@@ -44,3 +44,4 @@ pub fn serve(url: &str, repo: Arc<dyn Repository>) {
         )
     });
 }
+
