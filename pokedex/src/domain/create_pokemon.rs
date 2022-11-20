@@ -24,6 +24,7 @@ pub enum Error {
 }
 
 pub fn execute(req: Request, repo: Arc<dyn Repository>) -> Result<Response, Error> {
+    println!("{} : {} ", req.number, req.name);
     match (
             PokemonNumber::try_from(req.number),
             PokemonName::try_from(req.name),
@@ -79,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn it_shoulr_return_a_conflick_error_when_pokemon_number_already_exists() {
+    fn it_should_return_a_conflict_error_when_pokemon_number_already_exists() {
         let repo = Arc::new(InMemoryRepository::new());
         repo.insert(
             PokemonNumber::pikachu(),

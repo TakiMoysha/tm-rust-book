@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use crate::domain::entities::{ Pokemon, PokemonName, PokemonNumber, PokemonTypes };
 
+
 pub enum Insert {
     Ok(PokemonNumber),
     Conflict,
@@ -17,6 +18,21 @@ pub enum InsertError {
     Conflict,
     Unknown,
 }
+
+pub enum FetchAllError {
+    Unknown,
+}
+
+pub enum DeleteError {
+    NotFound,
+    Unknown,
+}
+
+pub enum FetchOneError {
+    NotFound,
+    Unknown,
+}
+
 
 impl InMemoryRepository {
     pub fn new() -> Self {
@@ -37,6 +53,12 @@ impl InMemoryRepository {
 }
 
 pub trait Repository: Send + Sync {
+    fn fetch_all(&self) -> Result<Vec<Pokemon>, FetchAllError>;
+
+    fn fetch_one(&self, number: PokemonNumber) -> Result<Pokemon, FetchOneError>;
+
+    fn delete(&self, number: PokemonNumber) -> Result<(), DeleteError>;
+
     fn insert(
         &self,
         number: PokemonNumber,
@@ -46,6 +68,56 @@ pub trait Repository: Send + Sync {
 }
 
 impl Repository for InMemoryRepository {
+    fn delete(&self, number: PokemonNumber) -> Result<(), DeleteError> {
+        if self.error {
+            return Err(DeleteError::Unknown);
+        }
+
+        let mut lock = match self.pokemons.lock() {
+            Ok(lock) => lock,
+            _ => return Err(DeleteError::Unknown),
+        };
+
+        let index = match lock.iter().position(|p| p.number == number) {
+            Some(index) => index,
+            None => return Err(DeleteError::NotFound),
+        };
+
+        lock.remove(index);
+        Ok(())
+    }
+
+    fn fetch_one(&self, number: PokemonNumber) -> Result<Pokemon, FetchOneError> {
+        if self.error {
+            return Err(FetchOneError::Unknown);
+        }
+
+        let lock = match self.pokemons.lock() {
+            Ok(lock) => lock,
+            _ => return Err(FetchOneError::Unknown),
+        };
+
+        match lock.iter().find(|p| p.number == number) {
+            Some(pokemon) => Ok(pokemon.clone()),
+            None => Err(FetchOneError::NotFound),
+        }
+    }
+
+    fn fetch_all(&self) -> Result<Vec<Pokemon>, FetchAllError> {
+        if self.error {
+            return Err(FetchAllError::Unknown);
+        }
+
+        let lock = match self.pokemons.lock() {
+            Ok(lock) => lock,
+            _ => return Err(FetchAllError::Unknown),
+        };
+
+        let mut pokemons = lock.to_vec();
+        pokemons.sort_by(|a, b| a.number.cmp(&b.number));
+        Ok(pokemons)
+    }
+
     fn insert(
         &self,
         number: PokemonNumber,

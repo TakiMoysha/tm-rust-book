@@ -3,9 +3,9 @@ use crate::domain::create_pokemon;
 use crate::repositories::pokemon::Repository;
 use rouille;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{sync::Arc};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Request {
     number: u16,
     name: String,
@@ -28,6 +28,7 @@ pub fn serve(req: &rouille::Request, repo: Arc<dyn Repository>) -> rouille::Resp
         },
         _ => return rouille::Response::from(Status::BadRequest),
     };
+
     match create_pokemon::execute(req, repo) {
         Ok(create_pokemon::Response {
             number,
