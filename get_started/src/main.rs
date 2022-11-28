@@ -623,7 +623,7 @@ fn _let_21_vector() {
     enum SpreadsheetCell {
         Int(i32),
         Float(f64),
-        Text(String)
+        Text(String),
     }
     let row = vec![
         SpreadsheetCell::Int(3),
@@ -653,7 +653,7 @@ fn _let_23_hashmap() {
     struct CommandName(String);
     struct CommandScore(i32);
 
-    let mut scores:HashMap<String, u32> = HashMap::new();
+    let mut scores: HashMap<String, u32> = HashMap::new();
     scores.insert(String::from("Yellow"), 50);
     scores.insert(String::from("Blue"), 10);
 
@@ -678,6 +678,115 @@ fn _let_23_hashmap_exercise() {
     // todo: create text-interface that allows the user to add employee names to company department name. "Add Sally to Engineering" or "Add Amir to Sales". Then let the user get a list of all people in a department, or all people in a company, sorted alphabetically by department.
 }
 
+fn _let_24_exceptions() {}
+
+fn _let_25_generics() {
+    let number_list = vec![34, 61, 13, 671, 23];
+    let char_list = vec!['a', 'w', 'b', 'g', '1', 'k'];
+
+    fn largest_vec(list: &[i32]) -> &i32 {
+        let mut largest = &list[0];
+        for item in list {
+            if item > largest {
+                largest = item;
+            }
+        }
+        largest
+    }
+    let res_largest_vec = largest_vec(&number_list);
+
+    fn largest_char(list: &[char]) -> &char {
+        let mut largest = &list[0];
+        for item in list {
+            if item > largest {
+                largest = item;
+            }
+        }
+        largest
+    }
+    let res_largest_char = largest_char(&char_list);
+
+    fn largest_generic<T: PartialOrd>(list: &[T]) -> &T {
+        let mut largest = &list[0];
+        for item in list {
+            if item > largest {
+                largest = item;
+            }
+        }
+        largest
+    }
+    // assert_eq!(res_largest_vec, largest_generic(number_list));
+    // assert_eq!(res_largest_char, largest_generic(char_list));
+
+    struct Point<T> {
+        x: T,
+        y: T,
+    }
+    fn test_point() {
+        let p1 = Point { x: 5, y: 2 };
+        let p2 = Point { x: 5.1, y: 10.5 };
+        let p3 = Point { x: 'a', y: 'b' };
+    }
+}
+
+fn _let_26_traits() {
+    pub trait Summary {
+        fn summarize(&self) -> String;
+        fn default_summarize(&self) -> String {
+            String::from("(Read more...)")
+        }
+    }
+    pub struct NewsArticle {
+        pub headline: String,
+        pub location: String,
+        pub author: String,
+        pub content: String,
+    }
+
+    impl Summary for NewsArticle {
+        fn summarize(&self) -> String {
+            format!("{}, by {} ({})", self.headline, self.author, self.location)
+        }
+    }
+
+    pub struct Tweet {
+        pub username: String,
+        pub content: String,
+        pub reply: bool,
+        pub retweet: bool,
+    }
+    impl Summary for Tweet {
+        fn summarize(&self) -> String {
+            format!("{}: {}", self.username, self.content)
+        }
+    }
+
+    let tweet = Tweet {
+        username: String::from("bookvisor"),
+        content: String::from("Hello Dj"),
+        reply: false,
+        retweet: false,
+    };
+    println!("1 new tweet: `{}`", tweet.summarize());
+    println!("1 new tweet: `{}`", tweet.default_summarize());
+
+    use std::fmt::{Display, Debug};
+    fn some_function<T, U>(t: &T, u: &U) -> i32
+    where
+        T: Display + Clone,
+        U: Clone + Debug,
+    { 32 }
+
+    fn returns_summarizable() -> impl Summary {
+        Tweet {
+            username: String::from("horse_ebooks"),
+            content: String::from("hello wolrd"),
+            reply: false,
+            retweet: false,
+        }
+    }
+}
+
 fn main() {
-    _let_23_hashmap();
+    _let_26_traits();
 }
