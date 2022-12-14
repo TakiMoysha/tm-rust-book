@@ -788,5 +788,4 @@ fn _let_26_traits() {
 }
 
 fn main() {
-    _let_26_traits();
 }
