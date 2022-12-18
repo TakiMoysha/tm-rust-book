@@ -1,3 +1,5 @@
+mod codewars;
+
 #[warn(dead_code)]
 fn _let_1() {
     let (a, b, c, d, e): (i8, i16, i32, i64, i128) = (
