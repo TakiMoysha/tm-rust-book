@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::SystemTime, time::UNIX_EPOCH};
+use std::{ sync::Arc, time::SystemTime, time::UNIX_EPOCH };
 
 use crate::repositories::pokemon::Repository;
 
@@ -36,11 +36,14 @@ impl From<Status> for rouille::Response {
 }
 
 fn print_init_request_msg(request: &rouille::Request) {
-    let time_now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-    println!("{:?} - {:?} {:?} - {}", time_now, request.remote_addr(), request.method(), request.url());
+    let time_now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+    println!(
+        "{:?} - {:?} {:?} - {}",
+        time_now,
+        request.remote_addr(),
+        request.method(),
+        request.url()
+    );
 }
 
 pub fn serve(url: &str, repo: Arc<dyn Repository>) {
@@ -56,4 +59,3 @@ pub fn serve(url: &str, repo: Arc<dyn Repository>) {
         )
     });
 }
-

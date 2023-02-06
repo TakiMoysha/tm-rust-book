@@ -4,5 +4,10 @@
         "pikachu",
         "pokemons",
         "rouille"
-    ]
+    ],
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#46203D",
+        "titleBar.activeBackground": "#622D56",
+        "titleBar.activeForeground": "#FCF9FB"
+    }
 }
