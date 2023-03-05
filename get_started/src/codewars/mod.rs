@@ -1,3 +1,4 @@
+pub mod bit_counting;
 pub mod disemvowel;
 pub mod divisors;
 pub mod ends_with;
