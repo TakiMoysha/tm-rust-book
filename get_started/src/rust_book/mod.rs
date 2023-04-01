@@ -1,5 +1,5 @@
 #[warn(dead_code)]
-pub fn _let_1() {
+fn _let_1() {
     let (a, b, c, d, e): (i8, i16, i32, i64, i128) = (
         i8::MAX,
         i16::MAX,
@@ -17,12 +17,12 @@ mod math_const {
     pub(crate) const PI_CUBE: f64 = PI * PI * PI;
 }
 
-pub fn _let_2() {
+fn _let_2() {
     println!("PI = {}", math_const::PI);
     println!("PI^3 = {}", math_const::PI_CUBE);
 }
 
-pub fn _let_3(exc: bool) -> std::io::Result<()> {
+fn _let_3(exc: bool) -> std::io::Result<()> {
     use std::io::Write;
 
     pub trait Writer {
@@ -48,7 +48,7 @@ pub fn _let_3(exc: bool) -> std::io::Result<()> {
     }
 }
 
-pub fn _let_4() {
+fn _let_4() {
     let x: (i32, f64, u8) = (500, 6.4, 1);
     println!("{:?}", x);
     let five_hundred = x.0;
@@ -58,7 +58,7 @@ pub fn _let_4() {
     println!("1: {}, 2: {}, 3: {}", five_hundred, six_point_four, one);
 }
 
-pub fn _let_5() -> i32 {
+fn _let_5() -> i32 {
     fn let_5_fn(num_a: i32, num_b: i32) -> i32 {
         let c = num_a * num_b;
         return c;
@@ -76,11 +76,11 @@ pub fn _let_5() -> i32 {
     return let_5_fn(a, x);
 }
 
-pub fn _let_6(num: i32) -> bool {
+fn _let_6(num: i32) -> bool {
     return num > (i8::MAX / 2).into();
 }
 
-pub fn _let_7(num: i32) {
+fn _let_7(num: i32) {
     let average = i8::MAX / 2;
     if num > average.into() {
         println!("Input: {}, average: {}", num, average);
@@ -91,7 +91,7 @@ pub fn _let_7(num: i32) {
     }
 }
 
-pub fn _let_8(num: i32) {
+fn _let_8(num: i32) {
     let _average: i32 = (i8::MAX / 2).into();
     match num {
         // 0..=average => println!("Input number less that {}", average),
@@ -101,7 +101,7 @@ pub fn _let_8(num: i32) {
     }
 }
 
-pub fn _let_9() {
+fn _let_9() {
     let mut count: i32 = 0;
     'loop_name: loop {
         let mut remaining: i32 = 10;
@@ -126,14 +126,14 @@ pub fn _let_9() {
     }
 }
 
-pub fn _let_10() {
+fn _let_10() {
     // _ <- write before var name for ignore compiler warning massage
     for _number in (1..10).rev() {
         println!("this step");
     }
 }
 
-pub fn _let_11() {
+fn _let_11() {
     let course = ("Rust", "beginner", "course");
 
     if let ("Rust", "beginner", cur) = course {
@@ -143,7 +143,7 @@ pub fn _let_11() {
     }
 }
 
-pub fn _let_12_types() {
+fn _let_12_types() {
     fn ex_tuple() {
         let boy_1: (String, u8, f32) = ("Mikhail".to_string(), 24, 36.6);
         let girl_1: (String, u8, f32, &str) = ("Vika".to_string(), 19, 37.1, "Sick");
@@ -255,7 +255,7 @@ pub fn _let_12_types() {
     ex_type_cast()
 }
 
-pub fn _let_13_file_system() {
+fn _let_13_file_system() {
     fn open() -> std::io::Result<()> {
         use std::fs::File;
 
@@ -269,7 +269,7 @@ pub fn _let_13_file_system() {
     }
 }
 
-pub fn _let_14() {
+fn _let_14() {
     const SPACE: u8 = b' ';
     let example_string: String = String::from("hello world, TakiMoysha");
 
@@ -307,7 +307,7 @@ pub fn _let_14() {
     }
 }
 
-pub fn _let_15_struct() {
+fn _let_15_struct() {
     {
         #[derive(Debug)]
         struct Point {
@@ -354,7 +354,7 @@ pub fn _let_15_struct() {
     }
 }
 
-pub fn _let_16_rectangle() {
+fn _let_16_rectangle() {
     fn log(area: u32) {
         println!("The area of the rectangle is {} square pixels.", area);
     }
@@ -403,7 +403,7 @@ pub fn _let_16_rectangle() {
     }
 }
 
-pub fn _let_17_methods() {
+fn _let_17_methods() {
     #[derive(Debug)]
     struct Rectangle {
         width: u32,
@@ -453,7 +453,7 @@ pub fn _let_17_methods() {
     println!("rect_1 can hold rect_2 {}", rect_1.can_hold(&rect_2));
 }
 
-pub fn _let_18_enums() {
+fn _let_18_enums() {
     enum IpAddrKind {
         V4,
         V6,
@@ -490,7 +490,7 @@ pub fn _let_18_enums() {
     // assert_eq!(absent_number.is_some(), false);
 }
 
-pub fn _let_18_1_option() {
+fn _let_18_1_option() {
     let x: Option<u32> = Some(2);
     assert_eq!(x.is_some(), true);
 
@@ -498,7 +498,7 @@ pub fn _let_18_1_option() {
     assert_eq!(x.is_none(), true);
 }
 
-pub fn _let_19_match() {
+fn _let_19_match() {
     struct Cent(u8);
     #[derive(Debug)]
     enum UsState {
@@ -545,7 +545,7 @@ pub fn _let_19_match() {
     }
 }
 
-pub fn _let_19_if_let() {
+fn _let_19_if_let() {
     let config_max = Some(3u8);
     let msg = "This maximum is configured to be";
     match config_max {
@@ -559,7 +559,7 @@ pub fn _let_19_if_let() {
     }
 }
 
-pub fn _let_20_same_name() {
+fn _let_20_same_name() {
     use std::fmt;
     use std::io;
 
@@ -572,7 +572,7 @@ pub fn _let_20_same_name() {
     // fn fun3() -> IoResult<()> { ... }
 }
 
-pub fn _let_20_1_re_export() {
+fn _let_20_1_re_export() {
     use crate::garden::vegetables::Barn;
 
     pub fn eat_at_restaurant() {
@@ -580,14 +580,14 @@ pub fn _let_20_1_re_export() {
     }
 }
 
-pub fn _let_20_2_external_packets() {
+fn _let_20_2_external_packets() {
     use rand::Rng;
 
     let secret_number = rand::thread_rng().gen_range(1..=100);
     println!("{:?}", secret_number);
 }
 
-pub fn _let_21_vector() {
+fn _let_21_vector() {
     let mut v: Vec<i32> = Vec::new();
     v.push(2);
     v.push(5);
@@ -631,7 +631,7 @@ pub fn _let_21_vector() {
     ];
 }
 
-pub fn _let_22_string() {
+fn _let_22_string() {
     let data = "Init content";
     let string_data = String::from("Init content");
     let s = data.to_string();
@@ -646,7 +646,7 @@ pub fn _let_22_string() {
     println!("{}", &data[0..8]);
 }
 
-pub fn _let_23_hashmap() {
+fn _let_23_hashmap() {
     use std::collections::HashMap;
 
     struct CommandName(String);
@@ -667,7 +667,7 @@ pub fn _let_23_hashmap() {
     println!("{:?}", map);
 }
 
-pub fn _let_23_hashmap_exercise() {
+fn _let_23_hashmap_exercise() {
     let list = [51, 345, 83, 1, 4, 589, 32, 51];
     // todo: search: average, median (after sort), mode of list
 
@@ -677,9 +677,9 @@ pub fn _let_23_hashmap_exercise() {
     // todo: create text-interface that allows the user to add employee names to company department name. "Add Sally to Engineering" or "Add Amir to Sales". Then let the user get a list of all people in a department, or all people in a company, sorted alphabetically by department.
 }
 
-pub fn _let_24_exceptions() {}
+fn _let_24_exceptions() {}
 
-pub fn _let_25_generics() {
+fn _let_25_generics() {
     let number_list = vec![34, 61, 13, 671, 23];
     let char_list = vec!['a', 'w', 'b', 'g', '1', 'k'];
 
@@ -728,7 +728,7 @@ pub fn _let_25_generics() {
     }
 }
 
-pub fn _let_26_traits() {
+fn _let_26_traits() {
     pub trait Summary {
         fn summarize(&self) -> String;
         fn default_summarize(&self) -> String {
@@ -761,7 +761,7 @@ pub fn _let_26_traits() {
     }
 
     let tweet = Tweet {
-        username: String::from("bookvisor"),
+        username: String::from("visor"),
         content: String::from("Hello Dj"),
         reply: false,
         retweet: false,
@@ -774,16 +774,83 @@ pub fn _let_26_traits() {
         32
     }
 
-    fn returns_summarizable() -> impl Summary {
+    fn returns_summarize() -> impl Summary {
         Tweet {
             username: String::from("horse_ebooks"),
-            content: String::from("hello wolrd"),
+            content: String::from("hello world"),
             reply: false,
             retweet: false,
         }
     }
 }
 
+fn _let_27_tests() {}
+// tests
+#[derive(Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+impl Rectangle {
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+}
 
-pub fn _let_27_() {
+pub fn run() {
+    println!("Rust book - start exercises.");
+    println!("Rust book - end exercises.");
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn _let_27_it_can_hold() {
+        let r_1 = Rectangle { width: 10, height: 20 };
+        let r_2 = Rectangle { width: 5, height: 15 };
+        assert!(r_1.can_hold(&r_2));
+        assert_eq!(r_1.can_hold(&r_2), true);
+    }
+
+    #[test]
+    fn _let_27_it_not_can_hold() {
+        let r_1 = Rectangle { width: 5, height: 1 };
+        let r_2 = Rectangle { width: 15, height: 20 };
+        assert!(!r_1.can_hold(&r_2));
+        assert_ne!(r_1.can_hold(&r_2), true);
+    }
+
+    #[test]
+    #[ignore = "always failed"]
+    fn _let_27_failed_test() {
+        let result = String::from("Hello world!");
+        assert!(false, "Example custom exception msg: <{}>", result);
+    }
+
+    #[test]
+    #[should_panic(expected = "less than or equal to 100")]
+    fn _let_27_planned_panic() {
+        fn is_right(value: i32) -> bool {
+            if value < 1 {
+                panic!("Value must be greater than or equal to 1, got {}", value);
+            } else if value > 100 {
+                panic!("Value must be less than or equal to 100, got {}.", value);
+            }
+            return true;
+        }
+
+        is_right(120);
+        // is_right(-1); bad panic
+    }
+
+    #[test]
+    fn _let_27_result_in_test() -> Result<(), String> {
+        // в таких тестах можно использовать оператор ? в тестах, если какая-то ф-ция внутри завершилась паникой
+        if 2 + 2 == 4 {
+            Ok(())
+        } else {
+            Err(String::from("2 + 2 != 4"))
+        }
+    }
 }

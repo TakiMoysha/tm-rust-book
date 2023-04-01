@@ -20,4 +20,3 @@ mod tests {
         assert_eq!(count_bits(254), 7);
     }
 }
-

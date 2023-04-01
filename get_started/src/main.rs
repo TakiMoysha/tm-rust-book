@@ -3,11 +3,9 @@ mod offtop;
 mod random;
 mod garden;
 mod codewars;
-mod rust_docs;
+mod rust_book;
 
 #[warn(unused_must_use)]
 fn main() {
-    let mut num = 1235_i64;
-
-    println!("{:?}", num.to_be_bytes());
+    rust_book::run()
 }
