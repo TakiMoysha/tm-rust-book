@@ -791,16 +791,102 @@ struct Rectangle {
     width: u32,
     height: u32,
 }
+
 impl Rectangle {
     fn can_hold(&self, other: &Rectangle) -> bool {
         self.width > other.width && self.height > other.height
     }
 }
 
+fn _let_28_functionality() {
+    mod closures {
+        #[derive(Debug, PartialEq, Copy, Clone)]
+        pub enum ShirtColor {
+            Red,
+            Blue,
+        }
+
+        pub struct Inventory {
+            pub shirts: Vec<ShirtColor>,
+        }
+
+        impl Inventory {
+            pub fn giveaway(&self, user_preference: Option<ShirtColor>) -> ShirtColor {
+                user_preference.unwrap_or_else(|| self.most_stocked())
+            }
+
+            fn most_stocked(&self) -> ShirtColor {
+                let mut num_red = 0;
+                let mut num_blue = 0;
+
+                for color in &self.shirts {
+                    match color {
+                        ShirtColor::Red => {
+                            num_red += 1;
+                        }
+                        ShirtColor::Blue => {
+                            num_blue += 1;
+                        }
+                    }
+                }
+                return if num_red > num_blue { ShirtColor::Red } else { ShirtColor::Blue };
+            }
+        }
+    }
+
+    let store = closures::Inventory {
+        shirts: vec![
+            closures::ShirtColor::Red,
+            closures::ShirtColor::Blue,
+            closures::ShirtColor::Blue
+        ],
+    };
+    let user_pref_1 = Some(closures::ShirtColor::Red);
+    let giveaway_1 = store.giveaway(user_pref_1);
+    println!("The user with preference {:?} gets {:?}", user_pref_1, giveaway_1);
+
+    let user_pref_2 = None;
+    let giveaway_2 = store.giveaway(user_pref_2);
+    println!("The user with preference {:?} gets {:?}", user_pref_2, giveaway_2);
+
+    pub mod iterators {
+        #[derive(PartialEq, Debug)]
+        pub struct Shoe {
+            pub size: u32,
+            pub style: String,
+        }
+
+        pub fn shoes_in_size(shoes: Vec<Shoe>, size: u32) -> Vec<Shoe> {
+            shoes
+                .into_iter()
+                .filter(|s| s.size == size)
+                .collect()
+        }
+    }
+
+    let shoes = vec![
+        iterators::Shoe { size: 10, style: String::from("sneaker") },
+        iterators::Shoe { size: 13, style: String::from("sandal") },
+        iterators::Shoe { size: 10, style: String::from("boot") }
+    ];
+
+    let in_my_size = iterators::shoes_in_size(shoes, 10);
+
+    assert_eq!(
+        in_my_size,
+        vec![
+            iterators::Shoe { size: 10, style: String::from("sneaker") },
+            iterators::Shoe { size: 10, style: String::from("boot") }
+        ]
+    );
+}
+
 pub fn run() {
     println!("Rust book - start exercises.");
+    _let_28_functionality();
     println!("Rust book - end exercises.");
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -852,5 +938,25 @@ mod tests {
         } else {
             Err(String::from("2 + 2 != 4"))
         }
+    }
+
+    #[test]
+    fn _let_28_iterator_sum() {
+        let v1 = vec![1, 2, 3, 4];
+
+        let total: i32 = v1.iter().sum();
+        assert_eq!(total, 10);
+
+        let mut sum = 0;
+        v1.iter().for_each(|el| {
+            sum = sum + el;
+        });
+        assert_eq!(sum, 10);
+
+        let mut sum = 0;
+        for el in v1.iter() {
+            sum = sum + el;
+        }
+        assert_eq!(sum, 10);
     }
 }
