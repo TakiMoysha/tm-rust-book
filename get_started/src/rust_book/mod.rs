@@ -1,12 +1,7 @@
 #[warn(dead_code)]
 fn _let_1() {
-    let (a, b, c, d, e): (i8, i16, i32, i64, i128) = (
-        i8::MAX,
-        i16::MAX,
-        i32::MAX,
-        i64::MAX,
-        i128::MAX,
-    );
+    let (a, b, c, d, e): (i8, i16, i32, i64, i128) =
+        (i8::MAX, i16::MAX, i32::MAX, i64::MAX, i128::MAX);
     println!("i8\ti16\ti32\t\ti64\t\t\ti128");
     println!("{a}\t{b}\t{c}\t{d}\t{e}");
 }
@@ -82,7 +77,8 @@ fn _let_6(num: i32) -> bool {
 
 fn _let_7(num: i32) {
     let average = i8::MAX / 2;
-    if num > average.into() {
+
+    if (num > average.into()) {
         println!("Input: {}, average: {}", num, average);
     } else if num < average.into() {
         println!("Input number less that {}", average);
@@ -323,7 +319,12 @@ fn _let_15_struct() {
             return Point { x, y, z, active };
         }
         fn new_default_point(x: f64, y: f64, z: f64) -> Point {
-            return Point { x, y, z, active: DEFAULT_ACTIVE };
+            return Point {
+                x,
+                y,
+                z,
+                active: DEFAULT_ACTIVE,
+            };
         }
 
         let p1 = new_default_point(1.0, 2.0, 11.0);
@@ -386,7 +387,10 @@ fn _let_16_rectangle() {
         fn area(rectangle: &Rectangle) -> u32 {
             return rectangle.height * rectangle.width;
         }
-        let rect_2 = Rectangle { width: 10, height: 20 };
+        let rect_2 = Rectangle {
+            width: 10,
+            height: 20,
+        };
         log(area(&rect_2));
     }
 
@@ -426,10 +430,16 @@ fn _let_17_methods() {
         // ============
 
         fn new(x: u32, y: u32) -> Self {
-            return Self { width: x, height: y };
+            return Self {
+                width: x,
+                height: y,
+            };
         }
         fn square(size: u32) -> Self {
-            return Self { width: size, height: size };
+            return Self {
+                width: size,
+                height: size,
+            };
         }
         // ------------
     }
@@ -443,7 +453,10 @@ fn _let_17_methods() {
         }
     }
 
-    let mut rect_1 = Rectangle { width: 30, height: 20 };
+    let mut rect_1 = Rectangle {
+        width: 30,
+        height: 20,
+    };
     println!("The Area is {}", rect_1.area());
     rect_1.expand(10);
     println!("The Area is {}", rect_1.area());
@@ -525,7 +538,10 @@ fn _let_19_match() {
     assert_eq!(value_in_cents(Coin::Penny).0, Cent(1).0);
     assert_eq!(value_in_cents(Coin::Nickel).0, Cent(5).0);
     assert_eq!(value_in_cents(Coin::Dime).0, Cent(10).0);
-    assert_eq!(value_in_cents(Coin::Quarter(UsState::Alabama)).0, Cent(25).0);
+    assert_eq!(
+        value_in_cents(Coin::Quarter(UsState::Alabama)).0,
+        Cent(25).0
+    );
 
     fn plus_one(x: Option<i32>) -> Option<i32> {
         match x {
@@ -627,7 +643,7 @@ fn _let_21_vector() {
     let row = vec![
         SpreadsheetCell::Int(3),
         SpreadsheetCell::Text(String::from("Blue")),
-        SpreadsheetCell::Float(10.12)
+        SpreadsheetCell::Float(10.12),
     ];
 }
 
@@ -769,8 +785,12 @@ fn _let_26_traits() {
     println!("1 new tweet: `{}`", tweet.summarize());
     println!("1 new tweet: `{}`", tweet.default_summarize());
 
-    use std::fmt::{ Display, Debug };
-    fn some_function<T, U>(t: &T, u: &U) -> i32 where T: Display + Clone, U: Clone + Debug {
+    use std::fmt::{Debug, Display};
+    fn some_function<T, U>(t: &T, u: &U) -> i32
+    where
+        T: Display + Clone,
+        U: Clone + Debug,
+    {
         32
     }
 
@@ -829,7 +849,11 @@ fn _let_28_functionality() {
                         }
                     }
                 }
-                return if num_red > num_blue { ShirtColor::Red } else { ShirtColor::Blue };
+                return if num_red > num_blue {
+                    ShirtColor::Red
+                } else {
+                    ShirtColor::Blue
+                };
             }
         }
     }
@@ -838,16 +862,22 @@ fn _let_28_functionality() {
         shirts: vec![
             closures::ShirtColor::Red,
             closures::ShirtColor::Blue,
-            closures::ShirtColor::Blue
+            closures::ShirtColor::Blue,
         ],
     };
     let user_pref_1 = Some(closures::ShirtColor::Red);
     let giveaway_1 = store.giveaway(user_pref_1);
-    println!("The user with preference {:?} gets {:?}", user_pref_1, giveaway_1);
+    println!(
+        "The user with preference {:?} gets {:?}",
+        user_pref_1, giveaway_1
+    );
 
     let user_pref_2 = None;
     let giveaway_2 = store.giveaway(user_pref_2);
-    println!("The user with preference {:?} gets {:?}", user_pref_2, giveaway_2);
+    println!(
+        "The user with preference {:?} gets {:?}",
+        user_pref_2, giveaway_2
+    );
 
     pub mod iterators {
         #[derive(PartialEq, Debug)]
@@ -857,17 +887,23 @@ fn _let_28_functionality() {
         }
 
         pub fn shoes_in_size(shoes: Vec<Shoe>, size: u32) -> Vec<Shoe> {
-            shoes
-                .into_iter()
-                .filter(|s| s.size == size)
-                .collect()
+            shoes.into_iter().filter(|s| s.size == size).collect()
         }
     }
 
     let shoes = vec![
-        iterators::Shoe { size: 10, style: String::from("sneaker") },
-        iterators::Shoe { size: 13, style: String::from("sandal") },
-        iterators::Shoe { size: 10, style: String::from("boot") }
+        iterators::Shoe {
+            size: 10,
+            style: String::from("sneaker"),
+        },
+        iterators::Shoe {
+            size: 13,
+            style: String::from("sandal"),
+        },
+        iterators::Shoe {
+            size: 10,
+            style: String::from("boot"),
+        },
     ];
 
     let in_my_size = iterators::shoes_in_size(shoes, 10);
@@ -875,15 +911,25 @@ fn _let_28_functionality() {
     assert_eq!(
         in_my_size,
         vec![
-            iterators::Shoe { size: 10, style: String::from("sneaker") },
-            iterators::Shoe { size: 10, style: String::from("boot") }
+            iterators::Shoe {
+                size: 10,
+                style: String::from("sneaker")
+            },
+            iterators::Shoe {
+                size: 10,
+                style: String::from("boot")
+            }
         ]
     );
 }
 
+fn _let_29_() {
+    let my_value: i32 = i32::MIN;
+}
+
 pub fn run() {
     println!("Rust book - start exercises.");
-    _let_28_functionality();
+    _let_29_();
     println!("Rust book - end exercises.");
 }
 
@@ -893,16 +939,28 @@ mod tests {
 
     #[test]
     fn _let_27_it_can_hold() {
-        let r_1 = Rectangle { width: 10, height: 20 };
-        let r_2 = Rectangle { width: 5, height: 15 };
+        let r_1 = Rectangle {
+            width: 10,
+            height: 20,
+        };
+        let r_2 = Rectangle {
+            width: 5,
+            height: 15,
+        };
         assert!(r_1.can_hold(&r_2));
         assert_eq!(r_1.can_hold(&r_2), true);
     }
 
     #[test]
     fn _let_27_it_not_can_hold() {
-        let r_1 = Rectangle { width: 5, height: 1 };
-        let r_2 = Rectangle { width: 15, height: 20 };
+        let r_1 = Rectangle {
+            width: 5,
+            height: 1,
+        };
+        let r_2 = Rectangle {
+            width: 15,
+            height: 20,
+        };
         assert!(!r_1.can_hold(&r_2));
         assert_ne!(r_1.can_hold(&r_2), true);
     }

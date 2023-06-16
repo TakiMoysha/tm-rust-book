@@ -15,8 +15,8 @@ pub fn _offtop_2_links() {
     use std::ops::Deref; // позволяет умному указателю вести себя как ссылка
     use std::ops::Drop; // событие выхода из области видимости экземпляра
 
-    // Box<T> - размещает значение в куче
-    // Rc<T> - подсчет ссылок
+    // Box<T> - set value in heap
+    // Rc<T> - set value in stack
 
     // RefMut<T> and Ref<T> - доступ через RefCell<T> - применяет правила заимствования
 

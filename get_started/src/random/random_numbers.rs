@@ -21,3 +21,4 @@ mod tests {
         rnd_numbers();
     }
 }
+
