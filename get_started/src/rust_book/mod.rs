@@ -1185,8 +1185,8 @@ fn _let_30_refcell() {
     println!("-------------------------- ");
 }
 
-use std::thread;
 use std::time::Duration;
+use std::{string, thread};
 fn _let_31_multithreading() {
     let handle = thread::spawn(|| {
         for i in 1..10 {
@@ -1207,6 +1207,40 @@ fn _let_31_multithreading() {
         println!("Here's a vector: {:?}", v);
     });
     handle_with_move.join().unwrap();
+
+    // ThreadPool
+    pub struct ThreadPool {
+        workers: Vec<Worker>,
+    }
+    pub struct Worker {
+        id: usize,
+        thread: thread::JoinHandle<()>,
+    }
+    impl Worker {
+        fn new(id: usize) -> Worker {
+            let thread = thread::spawn(|| {
+                thread::sleep(Duration::from_secs(60));
+            });
+
+            Worker { id, thread }
+        }
+    }
+
+    impl ThreadPool {
+        pub fn new(size: usize) -> ThreadPool {
+            assert!(size > 0);
+            let mut workers = Vec::with_capacity(size);
+
+            for id in 0..size {
+                workers.push(Worker::new(id));
+            }
+
+            ThreadPool { workers }
+        }
+    }
+
+    let tp = ThreadPool::new(8);
+    thread::sleep(Duration::from_secs(60));
 }
 
 use std::sync::mpsc;
@@ -1332,9 +1366,233 @@ fn _let_32_1_mutex_in_threads() {
     println!("Result: {}", *count.lock().unwrap());
 }
 
+fn _let_33_1_oop() {
+    pub struct AveragedCollection {
+        list: Vec<i32>,
+        average: f64,
+    }
+
+    impl AveragedCollection {
+        pub fn add(&mut self, value: i32) {
+            self.list.push(value);
+            self.update_average();
+        }
+
+        pub fn remove(&mut self) -> Option<i32> {
+            let result = self.list.pop();
+            match result {
+                Some(value) => {
+                    self.update_average();
+                    Some(value)
+                }
+                None => None,
+            }
+        }
+
+        pub fn average(&self) -> f64 {
+            self.average
+        }
+
+        fn update_average(&mut self) {
+            let total: i32 = self.list.iter().sum();
+            self.average = total as f64 / self.list.len() as f64;
+        }
+    }
+}
+
+fn _let_33_2_trait_instead_inheritance() {
+    pub trait Draw {
+        fn draw(&self);
+    }
+
+    pub struct Screen {
+        pub components: Vec<Box<dyn Draw>>,
+    }
+
+    impl Screen {
+        pub fn run(&self) {
+            for component in self.components.iter() {
+                component.draw();
+            }
+        }
+    }
+
+    pub struct Button {
+        pub width: u32,
+        pub height: u32,
+        pub label: String,
+    }
+
+    impl Draw for Button {
+        fn draw(&self) {}
+    }
+
+    pub struct SelectBox {
+        pub width: u32,
+        pub height: u32,
+        pub options: Vec<String>,
+    }
+
+    impl Draw for SelectBox {
+        fn draw(&self) {}
+    }
+
+    let screen = Screen {
+        components: vec![Box::new(Button {
+            width: 5,
+            height: 10,
+            label: String::from("Hello"),
+        })],
+    };
+
+    fn start_my_gui() {
+        let screen = Screen {
+            components: vec![
+                Box::new(SelectBox {
+                    width: 75,
+                    height: 10,
+                    options: vec![
+                        String::from("yes"),
+                        String::from("maybe"),
+                        String::from("no"),
+                    ],
+                }),
+                Box::new(Button {
+                    width: 50,
+                    height: 10,
+                    label: String::from("Ok"),
+                }),
+            ],
+        };
+    }
+
+    start_my_gui();
+}
+
+fn _let_33_3_state_pattern() {
+    trait PostState {
+        fn request_review(self: Box<Self>) -> Box<dyn PostState>;
+        fn approve(self: Box<Self>) -> Box<dyn PostState>;
+        fn reject(self: Box<Self>) -> Box<dyn PostState> {
+            Box::new(Draft {})
+        }
+        fn content<'a>(&self, post: &'a Post) -> &'a str {
+            ""
+        }
+    }
+
+    struct Draft {}
+    struct Published {}
+    struct PendingReview {
+        content: String,
+    }
+
+    struct Post {
+        state: Option<Box<dyn PostState>>,
+        content: String,
+    }
+
+    impl PostState for Draft {
+        fn request_review(self: Box<Self>) -> Box<dyn PostState> {
+            Box::new(PendingReview {
+                content: String::from(""),
+            })
+        }
+        fn approve(self: Box<Self>) -> Box<dyn PostState> {
+            self
+        }
+    }
+
+    impl PostState for Published {
+        fn request_review(self: Box<Self>) -> Box<dyn PostState> {
+            self
+        }
+        fn approve(self: Box<Self>) -> Box<dyn PostState> {
+            self
+        }
+        fn content<'a>(&self, post: &'a Post) -> &'a str {
+            &post.content
+        }
+    }
+
+    impl PostState for PendingReview {
+        fn request_review(self: Box<Self>) -> Box<dyn PostState> {
+            self
+        }
+        fn approve(self: Box<Self>) -> Box<dyn PostState> {
+            self
+        }
+        fn reject(self: Box<Self>) -> Box<dyn PostState> {
+            Box::new(Draft {})
+        }
+    }
+
+    impl Post {
+        pub fn new(&self) -> Post {
+            Post {
+                state: Some(Box::new(Draft {})),
+                content: String::new(),
+            }
+        }
+        pub fn add_text(&mut self, text: &str) {
+            self.content.push_str(text);
+        }
+        pub fn request_review(&mut self) {
+            if let Some(s) = self.state.take() {
+                self.state = Some(s.request_review())
+            }
+        }
+        pub fn approve(&mut self) {
+            if let Some(s) = self.state.take() {
+                self.state = Some(s.approve())
+            }
+        }
+        pub fn content(&self) -> &str {
+            self.state.as_ref().unwrap().content(self)
+        }
+    }
+}
+
+fn _let_34_1_patterns_and_matching() {
+    // literals, destructured [arrays, enums, structs, tuples], variables, wildcard, placeholders
+
+    const VALUE: u32 = 0;
+    const PATTERN: u32 = 0;
+    const EXPRESSION: u32 = 0;
+
+    // match sould be e..austive (that all possibilities for the VALUE)
+    // think of `match` as an assignable value. `match` follows the same rules
+    let x = match VALUE {
+        // PATTERN => EXPRESSION,
+        0 => Some(0 as i32),
+        101..=199 => Some((VALUE * 2) as i32),
+        1..=100 | 200..=1000 => Some(VALUE as i32),
+        _ => Some(-1), // any pattern
+    };
+
+    // not check exhaustive (as match)
+    let favorite_color: Option<&str> = None;
+    let is_tuesday = false;
+    let age: Result<u8, _> = "34".parse();
+
+    if let Some(color) = favorite_color {
+        println!("Using your favorite color, {color}, as the background");
+    } else if is_tuesday {
+        println!("Tuesday is green day!");
+    } else if let Ok(age) = age {
+        if age > 30 {
+            println!("Usin purple as the background color");
+        } else {
+            println!("Using orange as the background color");
+        }
+    } else {
+        println!("Using blue as the background color");
+    }
+}
+
 pub fn run() {
     println!("Rust book - start exercises.");
-    _let_32_1_mutex_in_threads();
+    _let_34_1_patterns_and_matching();
     println!("Rust book - end exercises.");
 }
 
