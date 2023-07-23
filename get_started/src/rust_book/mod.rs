@@ -1560,9 +1560,10 @@ fn _let_34_1_patterns_and_matching() {
     const PATTERN: u32 = 0;
     const EXPRESSION: u32 = 0;
 
+    // pattern match
     // match sould be e..austive (that all possibilities for the VALUE)
     // think of `match` as an assignable value. `match` follows the same rules
-    let x = match VALUE {
+    let x: Option<i32> = match VALUE {
         // PATTERN => EXPRESSION,
         0 => Some(0 as i32),
         101..=199 => Some((VALUE * 2) as i32),
@@ -1570,6 +1571,7 @@ fn _let_34_1_patterns_and_matching() {
         _ => Some(-1), // any pattern
     };
 
+    // if let
     // not check exhaustive (as match)
     let favorite_color: Option<&str> = None;
     let is_tuesday = false;
@@ -1588,11 +1590,195 @@ fn _let_34_1_patterns_and_matching() {
     } else {
         println!("Using blue as the background color");
     }
+
+    // while let
+    //
+    let mut stack = Vec::new();
+    stack.push(1);
+    stack.push(2);
+    stack.push(3);
+
+    while let Some(top) = stack.pop() {
+        println!("{}", top);
+    }
+
+    // for
+    //
+    let v = vec!['a', 'b', 'c'];
+
+    for (index, value) in v.iter().enumerate() {
+        println!("{} is at index {}", value, index);
+    }
+
+    // let
+    // let PATTERN = ExPRESSION;
+    let (x, y, z) = (1, 2, 3);
+    let (x, _, _, _) = (1, 2, 3, 4);
+
+    // functions
+    //
+    fn print_coordinates(&(x, y): &(i32, i32)) {
+        println!("Current localtion: ({}, {})", x, y);
+    }
+
+    let point = (3, 5);
+    print_coordinates(&point);
 }
+
+fn _let_34_2_irrefutable_refutable_templates() {
+    let mut x: Vec<i32> = vec![];
+    // let Some(x) = x; // refutable, let can't take refutable template
+    if let Some(n_x) = x.pop() {
+        println!("{}", n_x);
+    }
+}
+
+fn _lel_34_3_syntax_template() {
+    //
+    let x = Some(5);
+    let y = 10;
+
+    match x {
+        Some(50) => println!("Got 50"),
+        Some(y) => println!("Matched, y = {y}"), // this
+        _ => println!("Default case, x = {:?}", x),
+    }
+    println!("at the end: x = {:?}, y = {y}", x);
+
+    //
+    //
+    let x = 1;
+
+    match x {
+        1 | 2 => println!("one or two"),
+        3 => println!("three"),
+        _ => println!("anything"),
+    }
+    //
+    //
+    let x = 5;
+    match x {
+        1..=5 => println!("one through five"),
+        _ => println!("something else"),
+    }
+
+    let x = 'i';
+    match x {
+        'a'..='j' => println!("early ASCII letter"),
+        'k'..='z' => println!("late ASCII letter"),
+        _ => println!("something else"),
+    }
+    //
+    // destructured
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    let p = Point { x: 0, y: 7 };
+
+    let Point { x: a, y: b } = p;
+    assert_eq!(0, a);
+    assert_eq!(7, b);
+    //
+    // ignore entire value _
+    fn foo(_: i32, y: i32) {
+        println!("Only y: {}", y);
+    }
+    foo(2, 3);
+
+    let mut settings_value = Some(5);
+    let new_settings_value = Some(10);
+
+    match (settings_value, new_settings_value) {
+        (Some(_), Some(_)) => {
+            println!("Can't overwirte an existing customized value");
+        }
+        _ => {
+            settings_value = new_settings_value;
+        }
+    }
+
+    println!("settings is {:?}", settings_value);
+
+    let numbers = (2, 4, 8, 16, 32);
+
+    match numbers {
+        (first, _, third, _, fifth) => {
+            println!("Some numbers: {first}, {third}, {fifth}")
+        }
+    }
+    //
+    let s = Some(String::from("hello!"));
+    if let Some(_s) = s {
+        println!("found a string");
+    }
+    // println!("{:?}", s); // s was borrow to _s
+    //
+    let x = Some(String::from("Hello!"));
+    if let Some(_) = x {
+        println!("found a string");
+    }
+    println!("{:?}", x); // good, x not borrowing
+    //
+    // ignore part of value with .. 
+    struct Point3D {
+        x: i32,
+        y: i32,
+        z: i32,
+    }
+
+    let origin = Point3D { x: 0, y: 0, z: 0 };
+
+    match origin {
+        Point3D { x, .. } => println!("x is {}", x),
+    }
+    //
+    let numbers = (2, 4, 8, 16, 32);
+
+    match numbers {
+        (first, .., last) => {
+            println!("Some numbers: {first}, {last}");
+        }
+    }
+    //
+    // match guard
+    let num = Some(4);
+
+    match num {
+        Some(x) if x % 2 == 0 => println!("The number {} is even", x),
+        Some(x) => println!("The number {} is odd", x),
+        None => (), 
+    }
+}
+
+fn _let_34_4_at() {
+    enum Message {
+        Hello { id: i32 },
+    }
+
+    let msg = Message::Hello { id: 5 };
+
+    match msg {
+        Message::Hello {
+            id: id_variable @ 3..=7,
+        } => println!("Found an id in range: {}", id_variable),
+        Message::Hello { id: 10..=12 } => {
+            println!("Found an id in another range")
+        }
+        Message::Hello { id } => println!("Found some other id: {}", id),
+    }
+}
+
+fn _let_35_extends_features() {}
+
 
 pub fn run() {
     println!("Rust book - start exercises.");
     _let_34_1_patterns_and_matching();
+    _let_34_2_irrefutable_refutable_templates();
+    _lel_34_3_syntax_template();
+    _let_34_4_at();
     println!("Rust book - end exercises.");
 }
 
