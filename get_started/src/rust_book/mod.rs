@@ -1770,9 +1770,7 @@ fn _let_34_4_at() {
     }
 }
 
-fn _let_35_extends_features() {
-
-}
+fn _let_35_extends_features() {}
 
 
 pub fn run() {
