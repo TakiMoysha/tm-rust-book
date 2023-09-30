@@ -1770,15 +1770,14 @@ fn _let_34_4_at() {
     }
 }
 
-fn _let_35_extends_features() {}
+fn _let_35_extends_features() {
+
+}
 
 
 pub fn run() {
     println!("Rust book - start exercises.");
-    _let_34_1_patterns_and_matching();
-    _let_34_2_irrefutable_refutable_templates();
-    _lel_34_3_syntax_template();
-    _let_34_4_at();
+    _let_35_extends_features();
     println!("Rust book - end exercises.");
 }
 
