@@ -4,23 +4,24 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
 
-struct App {}
-
-fn app() {}
 
 fn handle_connection(mut stream: TcpStream) {
     let reader = BufReader::new(&mut stream);
-    let http_request: Vec<_> = reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
+    let request_line = reader.lines().next().unwrap().unwrap();
+    let request_header =
+        request_line.split_whitespace().take(3).collect::<Vec<&str>>();
+    let (method, path, http_version) = 
+        (request_header[0], request_header[1], request_header[2]);
+    
+    let (status_line, contents) = if path == "/robots.txt" {
+        ("HTTP/1.1 200 OK", fs::read_to_string("./public/robots.txt").unwrap())
+    } else if path == "/" {
+        ("HTTP/1.1 200 OK", fs::read_to_string("./public/index.html").unwrap())
+    } else {
+        ("HTTP/1.1 404 NOT FOUND", fs::read_to_string("./public/404.html").unwrap())
+    };
 
-    // println!("Request: {:#?}", http_request);
-    let status_line = "HTTP/1.1 200 OK";
-    let contents = fs::read_to_string("./public/index.html").unwrap();
     let length = contents.len();
-
     let response = 
         format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
