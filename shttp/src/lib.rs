@@ -77,6 +77,7 @@ impl ThreadPool {
         self.sender.as_ref().unwrap().send(task).unwrap();
     }
 }
+
 impl Drop for ThreadPool {
     fn drop(&mut self) {
         drop(self.sender.take());

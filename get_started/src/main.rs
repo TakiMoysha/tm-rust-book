@@ -11,5 +11,4 @@ mod data_structure;
 #[warn(unused_must_use)]
 fn main() {
     // rust_book::run()
-    strings::main()
 }
