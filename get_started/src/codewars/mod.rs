@@ -4,6 +4,7 @@ pub mod bubble_sort_once;
 pub mod divisors;
 pub mod dna;
 pub mod ends_with;
+pub mod people_in_bus;
 pub mod find_outlier;
 pub mod guisness_game;
 pub mod is_triangle;
