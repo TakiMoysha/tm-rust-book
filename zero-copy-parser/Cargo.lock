@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "dll_started"
+name = "zero-copy-parser"
 version = "0.1.0"
