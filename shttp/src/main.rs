@@ -1,4 +1,3 @@
-use std::fmt::format;
 use std::fs;
 use std::io::prelude::*;
 use std::io::BufReader;
