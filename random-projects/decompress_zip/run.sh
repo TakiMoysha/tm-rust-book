@@ -1,1 +1,1 @@
-cargo run ./data/compress.zip ./data/decompress
+cargo run ./data/compress.zip ./data/
