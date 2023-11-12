@@ -56,6 +56,6 @@ pub fn cow_ref() {
     println!("{} -> {}", some_text, res);
 }
 
-pub fn main() {
+pub fn run() {
     cow_ref();
 }

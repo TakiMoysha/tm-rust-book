@@ -1,22 +1,63 @@
-pub mod draw_on_surface {
+pub mod particles {
     use bevy::{
-        core_pipeline::tonemapping::Tonemapping, gizmos, prelude::*, window::WindowResized,
+        input::{mouse::MouseButtonInput, ButtonState},
+        prelude::*,
+        window::PrimaryWindow,
     };
 
-    fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-        commands.spawn((
-            Camera2dBundle {
-                camera: Camera {
-                    hdr: true, // HDR for bloom
-                    ..default()
-                },
-                tonemapping: Tonemapping::TonyMcMapface, // for white balance
-                ..default()
-            },
-            // BloomSettings::default(), // enable bloom for camera
-        ));
+    #[derive(Component, Clone)]
+    pub struct Particle {
+        velocity: Vec2,
+        position: Vec2,
+        // lifetime: Option<f32>, // or Timer
+        lifetime: Timer,
+    }
 
-        // Sprites
+    #[derive(Component, Debug)]
+    pub struct FireworksParticleSpawner {
+        rate: f32,
+        amount_per_burst: usize,
+        lifetime: f32,
+        timer: Timer,
+    }
+
+    #[derive(Component, Debug)]
+    pub struct Ground;
+
+    // DOMAIN
+    fn spawn_fireworks(
+        commands: &mut Commands,
+        pos: Vec2,
+        mut spawners: Query<(Entity, &mut FireworksParticleSpawner)>,
+        time: Res<Time>,
+    ) {
+        for (ent, mut spawner) in spawners.iter_mut() {
+            println!("spawner: {:?}", spawner);
+            spawner.timer.tick(time.delta());
+            println!("timer: {:?}", spawner.timer);
+            // if spawner.timer.just_finished() {
+            // println!("spawning");
+            // for index in 0..spawner.amount_per_burst {
+            //     let particle = Particle {
+            //         velocity: Vec2::Y * -1.,
+            //         position: pos,
+            //         lifetime: Timer::from_seconds(spawner.lifetime, TimerMode::Once),
+            //     };
+            //     let particle = commands.spawn_empty().insert(particle).id();
+            //     let mut sprite = SpriteBundle::default();
+            //     // commands.entity(ent).add_child(particle);
+            // }
+            // }
+        }
+    }
+
+    // PLUGINS
+    fn setup(
+        mut commands: Commands,
+        mut meshes: ResMut<Assets<Mesh>>,
+        mut materials: ResMut<Assets<StandardMaterial>>,
+        asset_server: Res<AssetServer>,
+    ) {
         commands.spawn(TextBundle::from_section(
             "Particles",
             TextStyle {
@@ -25,54 +66,112 @@ pub mod draw_on_surface {
                 color: Color::WHITE,
             },
         ));
+        let sphere_handle = meshes.add(
+            Mesh::try_from(shape::Icosphere {
+                radius: 1.,
+                subdivisions: 1,
+                ..default()
+            })
+            .unwrap(),
+        );
+        commands.spawn((
+            PbrBundle {
+                mesh: sphere_handle.clone(),
+                material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+                ..default()
+            },
+            Ground,
+        ));
+        commands.spawn(DirectionalLightBundle {
+            transform: Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        });
+        commands.spawn(PointLightBundle {
+            transform: Transform::from_xyz(5.0, 5.0, 0.0),
+            point_light: PointLight {
+                intensity: 0.0,
+                range: 500.0f32,
+                color: Color::WHITE,
+                shadows_enabled: true,
+                ..default()
+            },
+            ..default()
+        });
+        commands.spawn(Camera3dBundle {
+            transform: Transform::from_xyz(0., 0., 10.).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        });
     }
 
-    fn update(mut gizmos: Gizmos, time: Res<Time>) {
-        let sin = time.elapsed_seconds().sin() * 50.;
-        gizmos.line_2d(Vec2::Y * -sin, Vec2::splat(-80.), Color::RED)
-    }
+    fn update(time: Res<Time>) {}
 
-    fn mouse_button_input(buttons: Res<Input<MouseButton>>) {
-        if buttons.just_pressed(MouseButton::Left) {
-            println!("left mouse button pressed: {:?}", buttons);
+    fn mouse_handler(
+        mut commands: Commands,
+        mut mousebtn_evr: EventReader<MouseButtonInput>,
+        p_window: Query<&Window, With<PrimaryWindow>>,
+    ) {
+        for ev in mousebtn_evr.read() {
+            match ev.state {
+                ButtonState::Pressed => match p_window.single().cursor_position() {
+                    Some(pos) => {
+                        println!("Mouse left button pressed at {:?}", pos);
+                        // spawn_fireworks(&mut commands, pos);
+                    }
+                    None => {
+                        println!("Mouse left button pressed, but no cursor position available");
+                    }
+                },
+                ButtonState::Released => println!("Mouse left button released"),
+            }
         }
     }
 
-    fn on_resize_system(mut resize_reader: EventReader<WindowResized>) {
-        for event in resize_reader.iter() {
-            println!("window resized: {:?}", event);
-        }
+    fn draw_cursor(
+        camera_query: Query<(&Camera, &GlobalTransform)>,
+        ground_query: Query<&GlobalTransform, With<Ground>>,
+        windows: Query<&Window>,
+        mut gizmos: Gizmos,
+    ) {
+        let (camera, camera_transform) = camera_query.single();
+        let ground = ground_query.single();
+        let Some(cursor_position) = windows.single().cursor_position() else {
+            return;
+        };
+        let Some(ray) = camera.viewport_to_world(camera_transform, cursor_position) else {
+            return;
+        };
+        let Some(distance) = ray.intersect_plane(ground.translation(), ground.up()) else {
+            return;
+        };
+        let point = ray.get_point(distance);
+        gizmos.circle(point + ground.up() * 3., ground.up(), 0.1, Color::WHITE);
     }
 
-    pub struct StaterdDefaultPlugins;
-    impl Plugin for StaterdDefaultPlugins {
+    // SUPPORT
+    pub struct CorePlugins;
+    impl Plugin for CorePlugins {
         fn build(&self, app: &mut App) {
-            use bevy::input::common_conditions::*;
-
             app.add_systems(Startup, setup)
-                .add_systems(Update, update)
-                .add_systems(
-                    Update,
-                    (
-                        mouse_button_input.run_if(input_pressed(MouseButton::Left)),
-                        on_resize_system,
-                    ),
-                );
+                .add_systems(Update, (mouse_handler, update, draw_cursor));
         }
     }
 }
 
-use bevy::{prelude::*, window::WindowResolution};
+use bevy::{prelude::*, window::WindowResized};
 
 fn make_visible(mut window: Query<&mut Window>) {
     window.single_mut().visible = true;
 }
+fn on_resize_system(mut resize_reader: EventReader<WindowResized>) {
+    for event in resize_reader.read() {
+        println!("window resized: {:?}", event);
+    }
+}
 
 fn main() {
     let app_primary_window = Window {
-        title: "Hello World".to_string(),
-        resolution: WindowResolution::new(460., 370.),
-        present_mode: bevy::window::PresentMode::Fifo,
+        title: "TakiApp".into(),
+        resolution: (460., 370.).into(),
         visible: false,
         ..default()
     };
@@ -82,9 +181,10 @@ fn main() {
     };
     App::new()
         .add_systems(Startup, make_visible)
+        .add_systems(Update, on_resize_system)
         .add_plugins((
             DefaultPlugins.set(overwrite_defaul_plugin),
-            draw_on_surface::StaterdDefaultPlugins,
+            particles::CorePlugins,
         ))
         .run();
 }

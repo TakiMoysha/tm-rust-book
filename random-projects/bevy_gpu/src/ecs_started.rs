@@ -29,9 +29,9 @@ pub fn greet_people(
     }
 }
 
-pub struct StaterdDefaultPlugins;
+pub struct CorePlugins;
 
-impl Plugin for StaterdDefaultPlugins {
+impl Plugin for CorePlugins {
     fn build(&self, app: &mut App) {
         app.insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
             .add_systems(Startup, add_people)
