@@ -1,50 +1,90 @@
-use bevy::prelude::*;
+pub mod draw_on_surface {
+    use bevy::{
+        core_pipeline::tonemapping::Tonemapping, gizmos, prelude::*, window::WindowResized,
+    };
 
-// Entity Component System
-pub mod ecs_started {
-    use bevy::prelude::*;
+    fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+        commands.spawn((
+            Camera2dBundle {
+                camera: Camera {
+                    hdr: true, // HDR for bloom
+                    ..default()
+                },
+                tonemapping: Tonemapping::TonyMcMapface, // for white balance
+                ..default()
+            },
+            // BloomSettings::default(), // enable bloom for camera
+        ));
 
-    #[derive(Component)]
-    pub struct Name(String);
-
-    #[derive(Component)]
-    pub struct Person;
-
-    pub fn add_people(mut commands: Commands) {
-        commands.spawn((Person, Name("Bob".to_string())));
-        commands.spawn((Person, Name("Alice".to_string())));
-        commands.spawn((Person, Name("JoJo".to_string())));
+        // Sprites
+        commands.spawn(TextBundle::from_section(
+            "Particles",
+            TextStyle {
+                font: asset_server.load("fonts/Vera.ttf"),
+                font_size: 16.,
+                color: Color::WHITE,
+            },
+        ));
     }
 
-    #[derive(Resource)]
-    pub struct GreetTimer(Timer);
+    fn update(mut gizmos: Gizmos, time: Res<Time>) {
+        let sin = time.elapsed_seconds().sin() * 50.;
+        gizmos.line_2d(Vec2::Y * -sin, Vec2::splat(-80.), Color::RED)
+    }
 
-    pub fn greet_people(
-        time: Res<Time>,
-        mut timer: ResMut<GreetTimer>,
-        query: Query<&Name, With<Person>>,
-    ) {
-        if timer.0.tick(time.delta()).just_finished() {
-            for name in &query {
-                println!("hello {}!", name.0);
-                println!("time: {}", time.elapsed_seconds());
-            }
+    fn mouse_button_input(buttons: Res<Input<MouseButton>>) {
+        if buttons.just_pressed(MouseButton::Left) {
+            println!("left mouse button pressed: {:?}", buttons);
+        }
+    }
+
+    fn on_resize_system(mut resize_reader: EventReader<WindowResized>) {
+        for event in resize_reader.iter() {
+            println!("window resized: {:?}", event);
         }
     }
 
     pub struct StaterdDefaultPlugins;
-
     impl Plugin for StaterdDefaultPlugins {
         fn build(&self, app: &mut App) {
-            app.insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
-                .add_systems(Startup, add_people)
-                .add_systems(Update, greet_people);
+            use bevy::input::common_conditions::*;
+
+            app.add_systems(Startup, setup)
+                .add_systems(Update, update)
+                .add_systems(
+                    Update,
+                    (
+                        mouse_button_input.run_if(input_pressed(MouseButton::Left)),
+                        on_resize_system,
+                    ),
+                );
         }
     }
 }
 
+use bevy::{prelude::*, window::WindowResolution};
+
+fn make_visible(mut window: Query<&mut Window>) {
+    window.single_mut().visible = true;
+}
+
 fn main() {
+    let app_primary_window = Window {
+        title: "Hello World".to_string(),
+        resolution: WindowResolution::new(460., 370.),
+        present_mode: bevy::window::PresentMode::Fifo,
+        visible: false,
+        ..default()
+    };
+    let overwrite_defaul_plugin = WindowPlugin {
+        primary_window: Some(app_primary_window),
+        ..default()
+    };
     App::new()
-        .add_plugins((DefaultPlugins, ecs_started::StaterdDefaultPlugins))
+        .add_systems(Startup, make_visible)
+        .add_plugins((
+            DefaultPlugins.set(overwrite_defaul_plugin),
+            draw_on_surface::StaterdDefaultPlugins,
+        ))
         .run();
 }
