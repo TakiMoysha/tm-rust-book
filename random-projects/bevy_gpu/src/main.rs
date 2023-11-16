@@ -1,11 +1,15 @@
+use bevy::app::PluginGroupBuilder;
+use bevy::log::LogPlugin;
 use bevy::{prelude::*, window::WindowResized};
+
+pub mod statistics;
 
 fn make_visible(mut window: Query<&mut Window>) {
     window.single_mut().visible = true;
 }
 fn on_resize_system(mut resize_reader: EventReader<WindowResized>) {
     for event in resize_reader.read() {
-        println!("window resized: {:?}", event);
+        info!("window resized: {:?}", event);
     }
 }
 
@@ -16,26 +20,58 @@ fn main() {
         visible: false,
         ..default()
     };
-    let overwrite_defaul_plugin = WindowPlugin {
+    let ow_window_plugin = WindowPlugin {
         primary_window: Some(app_primary_window),
         ..default()
     };
+    let ow_log_plugin = LogPlugin {
+        level: bevy::log::Level::INFO,
+        ..default()
+    };
+    let ow_default_plugins = DefaultPlugins.set(ow_window_plugin).set(ow_log_plugin);
+
     App::new()
         .add_systems(Startup, make_visible)
         .add_systems(Update, on_resize_system)
         .add_plugins((
-            DefaultPlugins.set(overwrite_defaul_plugin),
-            particles::CorePlugins,
+            ow_default_plugins,
+            TakiAppPlugins,
+            statistics::TakiStatisticsPlugins,
         ))
         .run();
 }
+
+pub struct TakiAppPlugins;
+impl PluginGroup for TakiAppPlugins {
+    fn build(self) -> PluginGroupBuilder {
+        PluginGroupBuilder::start::<Self>()
+            .add(TakiAppDemoPlugin)
+            .add(particles::CorePlugin)
+    }
+}
+
+pub struct TakiAppDemoPlugin;
+fn log_demo() {
+    trace!("very noisy");
+    debug!("msg for debugging");
+    info!("helpful information that is worth printing by default");
+    warn!("some bad happended that isn't a failure, but thats worth calling out");
+    error!("something failed and we need to know about it");
+}
+
+impl Plugin for TakiAppDemoPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, log_demo);
+    }
+}
+
 
 pub mod particles {
     use bevy::{
         input::{mouse::MouseButtonInput, ButtonState},
         prelude::*,
         sprite::*,
-        window::PrimaryWindow,
+        window::{PrimaryWindow, WindowResolution},
     };
 
     // ################## COMPONENTS
@@ -62,8 +98,18 @@ pub mod particles {
     fn spawn_fireworks(
         commands: &mut Commands,
         pos: Vec2,
+        primary_window_resolution: &WindowResolution,
     ) {
+        let bird_x = (primary_window_resolution.width() / -2.);
+        let bird_y = (primary_window_resolution.height() / 2.);
 
+        let half_extets = 0.5
+            * Vec2::new(
+                primary_window_resolution.width(),
+                primary_window_resolution.height(),
+            );
+
+        info!("Spawning Firework");
     }
 
     // ################## PLUGINS
@@ -138,24 +184,26 @@ pub mod particles {
         p_window: Query<&Window, With<PrimaryWindow>>,
     ) {
         for ev in mousebtn_evr.read() {
+            // right and left mouse button
             match ev.state {
                 ButtonState::Pressed => match p_window.single().cursor_position() {
                     Some(pos) => {
-                        println!("Mouse left button pressed at {:?}", pos);
-                        spawn_fireworks(&mut commands, pos);
+                        info!("Mouse left button pressed at {:?}", pos);
+                        spawn_fireworks(&mut commands, pos, &p_window.single().resolution);
                     }
                     None => {
-                        println!("Mouse left button pressed, but no cursor position available");
+                        error!("Mouse left button pressed, but no cursor position available");
                     }
                 },
-                ButtonState::Released => println!("Mouse left button released"),
+                ButtonState::Released => debug!("Mouse left button released"),
             }
         }
     }
 
     // ################## SUPPORT
-    pub struct CorePlugins;
-    impl Plugin for CorePlugins {
+    pub struct CorePlugin;
+
+    impl Plugin for CorePlugin {
         fn build(&self, app: &mut App) {
             app.add_systems(Startup, setup)
                 .add_systems(Update, (mouse_handler, update));
