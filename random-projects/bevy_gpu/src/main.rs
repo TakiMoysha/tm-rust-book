@@ -101,17 +101,24 @@ pub mod materials {
     fn setup(
         mut commands: Commands, 
         mut meshes: ResMut<Assets<Mesh>>,
-        mut materials: ResMut<Assets<TakiMaterial>>,
+        // mut materials: ResMut<Assets<TakiMaterial>>,
+        mut materials: ResMut<Assets<StandardMaterial>>,
         asset_server: Res<AssetServer>,
     ) {
         commands.spawn(MaterialMeshBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 128.0 })),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
-            material: materials.add(TakiMaterial {
-                color: Color::BLUE,
-                color_texture: asset_server.load("space_shuttle.png").into(),
-                alpha_mode: AlphaMode::Blend,
+            material: materials.add(StandardMaterial {
+                base_color: Color::rgb(0.3, 0.5, 0.3),
+                perceptual_roughness: 1.0,
+                metallic: 0.0,
+                ..default()
             }),
+            // material: materials.add(TakiMaterial {
+            //     color: Color::BLUE,
+            //     color_texture: asset_server.load("space_shuttle.png").into(),
+            //     alpha_mode: AlphaMode::Blend,
+            // }),
             ..default()
         });
     }
