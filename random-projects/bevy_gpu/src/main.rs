@@ -2,6 +2,7 @@ use bevy::app::PluginGroupBuilder;
 use bevy::log::LogPlugin;
 use bevy::{prelude::*, window::WindowResized};
 
+pub mod demo;
 pub mod statistics;
 
 fn make_visible(mut window: Query<&mut Window>) {
@@ -42,92 +43,11 @@ fn main() {
 }
 
 pub struct TakiAppPlugins;
+
 impl PluginGroup for TakiAppPlugins {
     fn build(self) -> PluginGroupBuilder {
         PluginGroupBuilder::start::<Self>()
-            .add(TakiAppDemoPlugin)
-            .add(materials::TakiMaterialPlugin)
             .add(particles::CorePlugin)
-    }
-}
-
-pub struct TakiAppDemoPlugin;
-fn log_demo() {
-    trace!("very noisy");
-    debug!("msg for debugging");
-    info!("helpful information that is worth printing by default");
-    warn!("some bad happended that isn't a failure, but thats worth calling out");
-    error!("something failed and we need to know about it");
-}
-
-impl Plugin for TakiAppDemoPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, log_demo);
-    }
-}
-
-pub mod materials {
-    use bevy::{prelude::*, render::render_resource::AsBindGroup};
-
-    #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-    pub struct TakiMaterial {
-        #[uniform(0)]
-        color: Color,
-        #[texture(1)]
-        #[sampler(2)]
-        color_texture: Option<Handle<Image>>,
-        alpha_mode: AlphaMode,
-    }
-
-    impl Material for TakiMaterial {
-        fn fragment_shader() -> bevy::render::render_resource::ShaderRef { 
-            "shaders/taki_simple.material.wgsl".into()
-        }
-
-        fn alpha_mode(&self) -> AlphaMode {
-            self.alpha_mode
-        }
-    }
-
-    pub fn ground() -> StandardMaterial {
-        StandardMaterial {
-            base_color: Color::rgb(0.3, 0.5, 0.3),
-            perceptual_roughness: 1.0,
-            metallic: 0.0,
-            ..default()
-        }
-    }
-
-    fn setup(
-        mut commands: Commands, 
-        mut meshes: ResMut<Assets<Mesh>>,
-        // mut materials: ResMut<Assets<TakiMaterial>>,
-        mut materials: ResMut<Assets<StandardMaterial>>,
-        asset_server: Res<AssetServer>,
-    ) {
-        commands.spawn(MaterialMeshBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 128.0 })),
-            transform: Transform::from_xyz(0.0, 0.5, 0.0),
-            material: materials.add(StandardMaterial {
-                base_color: Color::rgb(0.3, 0.5, 0.3),
-                perceptual_roughness: 1.0,
-                metallic: 0.0,
-                ..default()
-            }),
-            // material: materials.add(TakiMaterial {
-            //     color: Color::BLUE,
-            //     color_texture: asset_server.load("space_shuttle.png").into(),
-            //     alpha_mode: AlphaMode::Blend,
-            // }),
-            ..default()
-        });
-    }
-
-    pub struct TakiMaterialPlugin;
-    impl Plugin for TakiMaterialPlugin {
-        fn build(&self, app: &mut App) {
-            app.add_systems(Startup, setup);
-        }
     }
 }
 
@@ -135,113 +55,128 @@ pub mod particles {
     use bevy::{
         input::{mouse::MouseButtonInput, ButtonState},
         prelude::*,
-        sprite::*,
         window::{PrimaryWindow, WindowResolution},
     };
-
     // ################## COMPONENTS
     #[derive(Component, Clone)]
-    pub struct FireworkParticle {
-        velocity: Vec2,
-        position: Vec2,
-        // lifetime: Option<f32>, // or Timer
-        lifetime: Timer,
-    }
-
-    #[derive(Component, Debug)]
-    pub struct FireworkParticleSpawner {
-        rate: f32,
-        amount_per_burst: usize,
-        lifetime: f32,
+    pub struct Lifetime {
         timer: Timer,
     }
 
-    #[derive(Component, Debug)]
-    pub struct Ground;
-
-    // ################## DOMAIN
-    fn spawn_fireworks(
-        commands: &mut Commands,
-        pos: Vec2,
-        primary_window_resolution: &WindowResolution,
-    ) {
-        let bird_x = (primary_window_resolution.width() / -2.);
-        let bird_y = (primary_window_resolution.height() / 2.);
-
-        let half_extets = 0.5
-            * Vec2::new(
-                primary_window_resolution.width(),
-                primary_window_resolution.height(),
-            );
-
-        info!("Spawning Firework");
+    // A particle is the visible part of a particle system.
+    // It's what you see on the screen when a particle system is active:
+    // The tiny specks of dust, the flames of a fire, the glowing orbs of a magical effect.
+    // You can have anywhere between a couple hundred and tens of thousands of particles in a single system.
+    // You can randomize a particle's size, its speed and movement direction,
+    // and change its color over the course of its lifetime.
+    #[derive(Component, Clone, Reflect, Debug, Default)]
+    pub struct Particle {
+        pub lifetime: Timer,
     }
 
-    // ################## PLUGINS
-    fn setup(
+    #[derive(Component, Default, Clone)]
+    pub struct ParticleDesc {
+        pub particle: Particle,
+        pub sprite: SpriteSheetBundle,
+        pub falling: Option<FallingParticle>,
+        pub radial: Option<RadialParticle>,
+        pub rotation: Option<RotationParticle>,
+        pub fading: Option<FadingParticle>,
+    }
+
+    #[derive(Component, Reflect)]
+    pub struct ParticleParent;
+
+    // An emitter is what's creating the particles.
+    // Emitters are usually not visible, but they can have a shape.
+    // That shape controls where and how particles are spawned,
+    // for example whether they should fill a room like dust or shoot away from a single point like a fountain.
+    #[derive(Component, Clone)]
+    pub struct RectParticleEmitter {
+        pub particle_parent: Entity,
+        pub size: Vec2,
+        pub rate: Timer,
+        pub varients: usize,
+        pub desc: ParticleDesc,
+    }
+
+    #[derive(Component, Clone)]
+    pub struct FallingParticle {
+        pub speed: f32,
+    }
+    #[derive(Component, Clone)]
+    pub struct RadialParticle {
+        pub speed: f32,
+    }
+    #[derive(Component, Clone)]
+    pub struct RotationParticle {
+        pub speed: f32,
+    }
+    #[derive(Component, Clone)]
+    pub struct FadingParticle {
+        pub speed: f32,
+    }
+    // ################## ANIMATIONS
+    // fn particles_fall(
+    //     mut particles: Query<(&mut Transform, &mut FallingParticle), With<Particle>>,
+    //     time: Res<Time>,
+    // ) {
+    //     for (mut transform, falling) in &mut particles {
+    //         transform.translation.y -= falling.speed * time.delta_seconds();
+    //     }
+    // }
+    //
+    // fn particles_radial(
+    //     mut particles: Query<(&mut Transform, &RadialParticle), With<Particle>>,
+    //     time: Res<Time>,
+    // ) {
+    //     for (mut transform, radial) in &mut particles {
+    //         let direction = transform.translation.truncate().normalize();
+    //         transform.translation += (radial.speed * time.delta_seconds()) * direction.extend(0.0);
+    //     }
+    // }
+    //
+    // fn particles_fade(mut particles: Query<(&mut Sprite, &Particle), With<FadingParticle>>) {
+    //     for (mut sprite, particle) in &mut particles {
+    //         sprite.color.set_a(particle.lifetime.percent_left());
+    //     }
+    // }
+    //
+    // fn particles_rotate(
+    //     mut particles: Query<(&mut Transform, &RotationParticle), With<Particle>>,
+    //     time: Res<Time>,
+    // ) {
+    //     for (mut transform, rotation) in &mut particles {
+    //         transform.rotation *= Quat::from_rotation_z(rotation.speed * time.delta_seconds());
+    //     }
+    // }
+    // #################### SYSTEMS
+    fn particles_update(
         mut commands: Commands,
-        mut meshes: ResMut<Assets<Mesh>>,
-        mut materials: ResMut<Assets<StandardMaterial>>,
-        asset_server: Res<AssetServer>,
+        mut particles: Query<(&Particle)>,
+        p_window: Query<&Window, (With<PrimaryWindow>)>,
     ) {
-        commands.spawn(TextBundle::from_section(
-            "Particles",
-            TextStyle {
-                font: asset_server.load("fonts/Vera.ttf"),
-                font_size: 16.,
-                color: Color::WHITE,
-            },
-        ));
-        let sphere_handle = meshes.add(
-            Mesh::try_from(shape::Icosphere {
-                radius: 1.,
-                subdivisions: 1,
-                ..default()
-            })
-            .unwrap(),
-        );
-        commands.spawn((
-            PbrBundle {
-                mesh: sphere_handle,
-                material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-                ..default()
-            },
-            Ground,
-        ));
-        commands.spawn((
-            PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Plane {
-                    size: 128.0,
-                    subdivisions: 1,
-                })),
-                material: materials.add(Color::WHITE.into()),
-                transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
-                ..default()
-            },
-            Ground,
-        ));
-        commands.spawn(DirectionalLightBundle {
-            transform: Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        });
-        commands.spawn(PointLightBundle {
-            transform: Transform::from_xyz(5.0, 5.0, 0.0),
-            point_light: PointLight {
-                intensity: 0.0,
-                range: 500.0f32,
-                color: Color::WHITE,
-                shadows_enabled: true,
-                ..default()
-            },
-            ..default()
-        });
-        commands.spawn(Camera3dBundle {
-            transform: Transform::from_xyz(0., 0., 10.).looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        });
+        for particle in &mut particles {
+            // if (particle.pos.x < -10 || particle.pos.x > p_window.single().resolution.height() + 10.) {
+            //     commands.entity(particle).despawn();
+            // } else if (particle.pos.y < -10 || particle.pos.y > p_window.single().resolution.height() + 10.) {
+            //     commands.entity(entity).despawn();
+            // }
+        }
     }
 
-    fn update(time: Res<Time>) {}
+    fn lifetimes_update(
+        mut commands: Commands,
+        time: Res<Time>,
+        mut lifetimes: Query<(Entity, &mut Lifetime)>,
+    ) {
+        for (entity, mut lifetime) in &mut lifetimes {
+            lifetime.timer.tick(time.delta());
+            if lifetime.timer.finished() {
+                commands.entity(entity).despawn();
+            }
+        }
+    }
 
     fn mouse_handler(
         mut commands: Commands,
@@ -252,10 +187,7 @@ pub mod particles {
             // right and left mouse button
             match ev.state {
                 ButtonState::Pressed => match p_window.single().cursor_position() {
-                    Some(pos) => {
-                        info!("Mouse left button pressed at {:?}", pos);
-                        spawn_fireworks(&mut commands, pos, &p_window.single().resolution);
-                    }
+                    Some(pos) => {}
                     None => {
                         error!("Mouse left button pressed, but no cursor position available");
                     }
@@ -265,13 +197,27 @@ pub mod particles {
         }
     }
 
+    fn setup(
+        mut commands: Commands,
+        asset_server: Res<AssetServer>,
+    ) {
+        commands.spawn(TextBundle::from_section(
+            "Particles",
+            TextStyle {
+                font: asset_server.load("fonts/Vera.ttf"),
+                font_size: 16.,
+                color: Color::WHITE,
+            },
+        ));
+    }
+
     // ################## SUPPORT
     pub struct CorePlugin;
 
     impl Plugin for CorePlugin {
         fn build(&self, app: &mut App) {
             app.add_systems(Startup, setup)
-                .add_systems(Update, (mouse_handler, update));
+                .add_systems(Update, (mouse_handler, lifetimes_update));
         }
     }
 }
