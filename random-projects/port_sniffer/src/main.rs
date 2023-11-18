@@ -1,4 +1,4 @@
-use std::{env, net::IpAddr};
+use std::{env, net::IpAddr, ops::Index};
 
 struct Arguments {
     flag: String,
@@ -12,7 +12,11 @@ impl Arguments {
             return Err("Bad input arguments");
         }
 
-        let f = args[1].clone();
+        let pre_args = {};
+        args.iter().enumerate().for_each(|(index, value)| {
+            value
+        });
+        let bind_index = args.("-b");
 
         Ok(())
     }
