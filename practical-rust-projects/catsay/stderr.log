@@ -1,0 +1,3 @@
+   Compiling catsay v0.1.0 (/home/takimoysha/tmdev/coding/tm-rust-book/practical-rust-projects/catsay)
+    Finished dev [unoptimized + debuginfo] target(s) in 2.11s
+     Running `target/debug/catsay --dead=true 'hi)'`
