@@ -1,5 +1,7 @@
 use clap::Parser;
 use colored::Colorize;
+use std::io::{self, Read};
+use anyhow::{ Context, Result };
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -12,24 +14,32 @@ struct Options {
     dead: Option<bool>,
     #[clap(short = 'f', long = "file")]
     catfile: Option<std::path::PathBuf>,
+    #[clap(short = 'i', long = "stdin", default_value = "false")]
+    stdin: bool,
 }
 
-fn catsay(msg: &str, catmode: bool, dead: bool, catfile: Option<std::path::PathBuf>) {
+fn catsay(
+    msg: &str,
+    catmode: bool,
+    dead: bool,
+    catfile: Option<std::path::PathBuf>,
+) -> Result<()> {
     if !catmode {
         println!("{msg}");
-        return;
+        return Ok(());
     }
 
     if msg.to_lowercase() == "woof" {
         eprintln!("A cat shouldn't bark like a dog.");
-        return;
+        return Ok(());
     }
 
     let eye = if dead { "x" } else { "o" };
     if catfile.is_some() {
         let path = &catfile.expect("Failed to read catfile");
-        let cat_template =
-            std::fs::read_to_string(path).expect(&format!("Failed to read {path:?}"));
+        let cat_template = std::fs::read_to_string(path).with_context(
+            || format!("Could not read catfile: {}", path.display())
+        )?;
         let eye = format!("{}", eye.red().bold());
         let cat_picture = cat_template.replace("{eye}", &eye);
         println!("<< {} >>", msg.bright_yellow().underline());
@@ -42,15 +52,24 @@ fn catsay(msg: &str, catmode: bool, dead: bool, catfile: Option<std::path::PathB
         println!("   ( {eye} {eye} )");
         println!("   =( I )=");
     }
+
+    Ok(())
 }
 
 fn main() {
     let options = Options::parse();
-    let use_catfile = options.catfile.is_some();
+    let mut msg = String::new();
+    if options.stdin {
+        io::stdin().read_to_string(&mut msg).unwrap();
+    } else {
+        msg = options.message;
+    };
+
     catsay(
-        options.message.as_str(),
+        msg.as_str(),
         options.catmode.unwrap(),
         options.dead.unwrap(),
         options.catfile,
-    );
+    )
+    .unwrap();
 }
