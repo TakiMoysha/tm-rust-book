@@ -1,7 +1,7 @@
+use anyhow::{Context, Result};
 use clap::Parser;
 use colored::Colorize;
 use std::io::{self, Read};
-use anyhow::{ Context, Result };
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -18,12 +18,7 @@ struct Options {
     stdin: bool,
 }
 
-fn catsay(
-    msg: &str,
-    catmode: bool,
-    dead: bool,
-    catfile: Option<std::path::PathBuf>,
-) -> Result<()> {
+fn catsay(msg: &str, catmode: bool, dead: bool, catfile: Option<std::path::PathBuf>) -> Result<()> {
     if !catmode {
         println!("{msg}");
         return Ok(());
@@ -37,9 +32,8 @@ fn catsay(
     let eye = if dead { "x" } else { "o" };
     if catfile.is_some() {
         let path = &catfile.expect("Failed to read catfile");
-        let cat_template = std::fs::read_to_string(path).with_context(
-            || format!("Could not read catfile: {}", path.display())
-        )?;
+        let cat_template = std::fs::read_to_string(path)
+            .with_context(|| format!("Could not read catfile: {}", path.display()))?;
         let eye = format!("{}", eye.red().bold());
         let cat_picture = cat_template.replace("{eye}", &eye);
         println!("<< {} >>", msg.bright_yellow().underline());
@@ -78,14 +72,26 @@ fn main() {
 mod tests {
     use super::*;
 
-    use std::process::Command;
     use assert_cmd::prelude::*;
+    use predicates::prelude::*;
+    use std::process::Command;
 
     #[test]
     fn run_with_defaults() {
         Command::cargo_bin("catsay")
             .expect("binary exists")
             .assert()
-            .success(); 
+            .success()
+            .stdout(predicate::str::contains("Meow!"));
+    }
+
+    #[test]
+    fn fail_on_non_existing_file() -> Result<(), Box<dyn std::error::Error>> {
+        Command::cargo_bin("catsay")
+            .expect("binary exists")
+            .args(&["-f", "no/such/file"])
+            .assert()
+            .failure();
+        Ok(())
     }
 }
