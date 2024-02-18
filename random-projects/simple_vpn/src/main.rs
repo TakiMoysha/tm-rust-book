@@ -1,15 +1,14 @@
-use std::io::Write;
-
-use clap::{command, Parser, Subcommand};
+use clap::{command, error, Parser, Subcommand};
 use env_logger;
 use log::{debug, error, info, LevelFilter};
 use serde_derive::{Deserialize, Serialize};
-use tokio::{io::AsyncReadExt, net::TcpStream};
-// use std::{
-//     collections::HashMap,
-//     sync::{Arc, Mutex},
-//     thread,
-// };
+use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::sync::{Arc, Mutex};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+
+const TUN_INTERFACE_NAME: &str = "simple-vpn";
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about=None)]
@@ -57,28 +56,68 @@ mod crypto {
     }
 }
 
-async fn run_server(args: AppArgs) {
-    info!("Starting server on {}", args.bind.unwrap());
-}
-
-mod client {
+mod network {
     use log::error;
-    use std::io::{Error, ErrorKind};
+    pub fn setup_tun_server_interface() -> Result<(), Box<dyn std::error::Error>> {
+        let tun_device_output = std::process::Command::new("sudo")
+            .arg("ip")
+            .arg("link")
+            .arg("set")
+            .arg("dev")
+            .arg("tun0")
+            .arg("up")
+            .output()?;
 
-    pub fn setup_network_as_client() -> Result<(), Error> {
+        if !tun_device_output.status.success() {
+            return Err(format!(
+                "Failed to setup SETUP TUN DEVICE: {:?}",
+                tun_device_output.stderr
+            )
+            .into());
+        }
+
+        let tun_ip_output = std::process::Command::new("sudo")
+            .arg("ip")
+            .arg("addr")
+            .arg("add")
+            .arg("10.8.0.1/24")
+            .arg("dev")
+            .arg("tun0")
+            .output()?;
+
+        if !tun_ip_output.status.success() {
+            return Err(format!("Failed to setup TUN IP: {:?}", tun_ip_output.stderr).into());
+        }
+
+        Ok(())
+    }
+
+    pub fn cleanup_tun_server_interface() {
+        let cleanup_output = std::process::Command::new("sudo")
+            .arg("ip")
+            .arg("link")
+            .arg("delete")
+            .arg("tun0")
+            .output()
+            .expect("Failed to execute CLEANUP command");
+
+        if !cleanup_output.status.success() {
+            let msg = format!("Failed to cleanup IP LINK: {}", cleanup_output.status);
+            error!("{}", msg);
+        }
+    }
+
+    pub fn setup_tun_client_interface() -> Result<(), Box<dyn std::error::Error>> {
         let ip_output = std::process::Command::new("ip")
             .arg("addr")
             .arg("add")
             .arg("10.8.0.2/24")
             .arg("dev")
             .arg("tun0")
-            .output()
-            .expect("Failed to execute command");
+            .output()?;
 
         if !ip_output.status.success() {
-            let msg = format!("Failed to setup tun device: {}", ip_output.status);
-            error!("{}", msg);
-            return Err(Error::new(ErrorKind::Other, msg));
+            return Err(format!("Failed to SETUP IP: {:?}", ip_output.stderr).into());
         }
 
         let link_output = std::process::Command::new("ip")
@@ -87,13 +126,10 @@ mod client {
             .arg("up")
             .arg("dev")
             .arg("tun0")
-            .output()
-            .expect("Failed to execute IP LINK command");
+            .output()?;
 
         if !link_output.status.success() {
-            let msg = format!("Failed to setup IP LINK: {}", link_output.status);
-            error!("{}", msg);
-            return Err(Error::new(ErrorKind::Other, msg));
+            return Err(format!("Failed to SETUP IP LINK: {:?}", link_output.stderr).into());
         }
 
         let route_output = std::process::Command::new("ip")
@@ -104,13 +140,10 @@ mod client {
             .arg("10.8.0.1")
             .arg("dev")
             .arg("tun0")
-            .output()
-            .expect("Failed to execute IP ROUTE command");
+            .output()?;
 
         if !route_output.status.success() {
-            let msg = format!("Failed to setup IP ROUTE: {}", route_output.status);
-            error!("{}", msg);
-            return Err(Error::new(ErrorKind::Other, msg));
+            return Err(format!("Failed to SETUP IP ROUTE: {:?}", route_output.stderr).into());
         }
 
         Ok(())
@@ -132,12 +165,85 @@ mod client {
     }
 }
 
-const TUN_INTERFACE_NAME: &str = "simple-vpn";
+#[derive(Serialize, Deserialize)]
+struct VpnPackage {
+    data: String,
+}
+
+async fn transmit_data_from_client_to_tun(client: &mut TcpStream, tun: &mut tun::platform::Device) {
+    let mut buffer = vec![0u8];
+    loop {
+        match client.try_read(&mut buffer) {
+            Ok(n) => {
+                let vpn_package: VpnPackage = bincode::deserialize(&buffer[..n]).unwrap();
+                let decrypted_data = crypto::decrypt_data(&vpn_package.data.as_bytes()).unwrap();
+                debug!("Writing {} bytes", n);
+                tun.write(&decrypted_data).unwrap();
+            }
+            Err(e) => {
+                error!("Error while reading from client: {}", e);
+                continue;
+            }
+        }
+    }
+}
+
+async fn transmit_data_from_tun_to_client(tun: &mut tun::platform::Device, clone: &TcpStream) {
+    let mut buffer = vec![0u8];
+
+    loop {
+        match tun.read(&mut buffer) {
+            Ok(n) => {
+                debug!("Read {} bytes", n);
+
+                let encrypted_data = crypto::encrypt_data(&buffer[..n]).unwrap();
+                clone
+                    .try_write(&encrypted_data)
+                    .expect("Failed to write to client");
+            }
+            Err(e) => {
+                error!("Error while reading from tun: {}", e);
+            }
+        }
+    }
+}
+
+async fn handle_client(
+    client_id: usize,
+    mut stream: TcpStream,
+    clients: Arc<Mutex<HashMap<usize, TcpStream>>>,
+) {
+    let mut buffer = vec![0];
+
+    loop {
+        match stream.try_read(&mut buffer) {
+            Ok(0) => {
+                info!("Client {} disconnected", client_id);
+                break;
+            }
+            Ok(n) => {
+                info!("Read {} bytes from client {}", n, client_id);
+                let clients_guard = clients.lock().unwrap();
+                if let Some(client) = clients_guard.get(&client_id) {
+                    client
+                        .try_write(&buffer[..n])
+                        .expect("Failed to write to client");
+                }
+            }
+            Err(e) => {
+                error!("Error in handle_client {}: {}", client_id, e);
+                break;
+            }
+        }
+    }
+
+    clients.lock().unwrap().remove(&client_id);
+    let _ = stream.shutdown().await.unwrap();
+}
 
 async fn run_client(args: AppArgs) {
     let server_url = args.server_url.unwrap();
     debug!("Starting client - {}", server_url.clone());
-    // client::run(server_url.as_str()).await;
 
     let mut stream = TcpStream::connect(server_url.clone()).await.unwrap();
 
@@ -145,7 +251,7 @@ async fn run_client(args: AppArgs) {
     config.name(TUN_INTERFACE_NAME);
     let mut tun_device = tun::create(&config).unwrap();
 
-    client::setup_network_as_client().unwrap();
+    network::setup_tun_client_interface().unwrap();
 
     info!("Connection established with {}", server_url.clone());
 
@@ -164,27 +270,82 @@ async fn run_client(args: AppArgs) {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct VpnPackage {
-    data: String,
-}
+async fn run_server(args: AppArgs) {
+    let listener = TcpListener::bind(args.bind.clone().unwrap()).await.unwrap();
+    let clients: Arc<Mutex<HashMap<usize, TcpStream>>> = Arc::new(Mutex::new(HashMap::new()));
 
-async fn transmit_data_from_client_to_tun(client: &mut TcpStream, tun: &mut tun::platform::Device) {
-    let mut buffer = vec![0u8; 1500];
-    loop {
-        match client.try_read(&mut buffer) {
-            Ok(n) => {
-                let vpn_package: VpnPackage = bincode::deserialize(&buffer[..n]).unwrap();
-                let decrypted_data = crypto::decrypt_data(&vpn_package.data.as_bytes()).unwrap();
-                debug!("Writing {} bytes", n);
-                tun.write(&decrypted_data).unwrap();
+    let mut config = tun::Configuration::default();
+    config.name("tun0");
+    let tun_device = tun::create(&config).unwrap();
+
+    if let Err(e) = network::setup_tun_server_interface() {
+        error!("Failed to setup TUN interface: {}", e);
+        return;
+    }
+
+    let shared_tun = Arc::new(Mutex::new(tun_device));
+    let tun_device_clone = shared_tun.clone();
+
+    info!("Starting server on {}", args.bind.clone().unwrap());
+    let clients_clone = clients.clone();
+
+    const CLIENT_INDX: usize = 0;
+
+    tokio::spawn(async move {
+        // todo!("Implement server with multi-client support");
+        let clients_guard = clients_clone.lock().unwrap();
+
+        match clients_guard.get(&CLIENT_INDX) {
+            Some(client) => {
+                let mut locked_tun = tun_device_clone.lock().unwrap();
+                transmit_data_from_tun_to_client(&mut *locked_tun, client).await;
+                drop(clients_guard);
             }
-            Err(e) => {
-                error!("Error while reading from client: {}", e);
-                continue;
+            None => {
+                error!("Failed to get client");
             }
         }
+    });
+
+    let new_conn = listener.accept().await;
+
+    if new_conn.is_err() {
+        error!(
+            "Failed to accept new connection: {:?}",
+            new_conn.unwrap_err().to_string()
+        );
+        return;
     }
+
+    let (mut stream, socket_addr) = new_conn.unwrap();
+    info!("Client connected: {}", socket_addr);
+    let p_stream = Arc::new(Mutex::new(stream));Распространенные заблуждения на протяжении всей жизни Rust
+
+    clients.lock().unwrap().insert(CLIENT_INDX, stream);
+
+    let tun_device_clone = shared_tun.clone();
+
+    tokio::spawn(async move {
+        let mut locked_tun = tun_device_clone.lock().unwrap();
+        transmit_data_from_tun_to_client(&mut *locked_tun, &mut stream).await;
+    });
+
+    // let tun_device_clone = shared_tun.clone();
+    // let clients_clone = clients.clone();
+
+    // tokio::spawn(async move {
+    //     let client_clone = clients_clone.lock().unwrap();
+    //     let client_clone = client_clone.get(&CLIENT_INDX).unwrap();
+    //     let mut locked_tun = tun_device_clone.lock().unwrap();
+    //     transmit_data_from_tun_to_client(&mut *locked_tun, &client_clone).await;
+    // });
+
+    // let clients_clone = clients.clone();
+    // tokio::spawn(async {
+    //     handle_client(CLIENT_INDX, &stream, clients_clone).await;
+    // });
+
+    let _ = network::cleanup_tun_server_interface();
 }
 
 #[tokio::main]
