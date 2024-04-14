@@ -1,0 +1,2 @@
+default:
+  wasm-pack build --target web

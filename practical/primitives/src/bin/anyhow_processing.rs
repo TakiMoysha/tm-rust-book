@@ -10,7 +10,7 @@ pub fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn run_demo() {
+pub fn main() {
     let result = run();
 
     if let Err(e) = result {

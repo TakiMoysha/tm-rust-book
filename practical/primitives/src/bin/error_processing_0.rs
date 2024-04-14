@@ -1,3 +1,4 @@
+
 use chrono::NaiveDate;
 use std::{env, fmt, fs};
 
@@ -65,7 +66,7 @@ pub fn run() -> Result<Vec<UserCommand>, String> {
     Ok(commands)
 }
 
-pub fn run_demo() {
+pub fn main() {
     let comands = run();
 
     if comands.is_err() {
@@ -78,4 +79,3 @@ pub fn run_demo() {
         .iter()
         .for_each(|cmd| println!("* {}", cmd));
 }
-

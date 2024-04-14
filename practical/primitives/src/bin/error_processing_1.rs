@@ -21,7 +21,7 @@ impl fmt::Display for MyError {
 
 impl std::error::Error for MyError {}
 
-pub fn  main() -> Result<(), MyError> {
+pub fn main() -> Result<(), MyError> {
     let file_name = std::env::args().nth(1).ok_or(MyError::CommandLineArgs)?;
     let content = std::fs::read_to_string(&file_name).map_err(MyError::FileReadError)?;
 
@@ -35,12 +35,17 @@ pub fn  main() -> Result<(), MyError> {
     Ok(())
 }
 
-pub fn run_demo() {
-    let result = main();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    if result.is_err() {
-        println!("{}", result.err().unwrap());
-        std::process::exit(1);
+    #[test]
+    fn test_main_function() {
+        let result = main();
+
+        if result.is_err() {
+            println!("{}", result.err().unwrap());
+            std::process::exit(1);
+        }
     }
 }
-

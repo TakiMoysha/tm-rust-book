@@ -2,22 +2,20 @@
 // !TODO: https://redis.io/docs/reference/protocol-spec/
 #![allow(warnings)] // hide warnings
 
+use std::net::SocketAddr;
+use std::sync::{mpsc, Arc, Mutex};
+use std::time::SystemTime;
+
 use anyhow::{Context, Result};
 use chrono::DateTime;
 use chrono::Local;
 use clap::Parser;
 use env_logger::Builder;
 use log::{debug, error, info, warn, LevelFilter};
-use std::net::SocketAddr;
-use std::sync::{mpsc, Arc, Mutex};
-use std::time::SystemTime;
-use tokio::time::sleep;
-use tokio::time::{sleep_until, Duration, Instant};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufStream};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::signal;
-// use tokio::sync::mpsc;
+use tokio::time::{sleep, sleep_until, Duration, Instant};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -36,17 +34,17 @@ struct ServerRuntime {
 
 async fn run_server(opts: ServerOpts) -> Result<ServerRuntime> {
     let address = opts.address.as_ref().expect("Address must be provided");
-    let (tx, rx) = mpsc::channel::<anyhow::Error>();
     let listener = TcpListener::bind(address)
         .await
         .map_err(|e| anyhow::anyhow!("Failed to bind server, by reason: {}", e))?;
+    let (tx, rx) = mpsc::channel::<anyhow::Error>();
+
     let server: ServerRuntime = ServerRuntime {
         listener,
         tx,
         rx,
         config: opts,
     };
-
     Ok(server)
 }
 
@@ -80,10 +78,10 @@ impl RESPDecoder {
         }
     }
 
-    fn decode(&mut self) -> Result<()> {
-        let buf = self.input;
-        Ok(())
-    }
+    // fn decode(&mut self) -> Result<()> {
+    //     let buf = self.input; // error
+    //     Ok(())
+    // }
 }
 
 async fn handle_request(mut stream: &mut BufStream<TcpStream>) -> Result<()> {
@@ -115,6 +113,7 @@ async fn handle_request(mut stream: &mut BufStream<TcpStream>) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     Builder::new().filter_level(LevelFilter::Debug).init();
+
     let server_opts = ServerOpts::parse();
     let server = run_server(server_opts).await?;
     debug!("time:{} Server running on {:?}", 0, server.config);
@@ -165,8 +164,8 @@ mod tests {
     }
 
     fn decoder_should_return_simple_string() {
-        let simple_string = "+HEY)\r\n";
-        let decoder = RESPDecoder::new(simple_string.into()).decode();
+        // let simple_string = "+HEY)\r\n";
+        // let decoder = RESPDecoder::new(simple_string.into()).decode();
         todo!()
     }
 }
