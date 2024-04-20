@@ -8,31 +8,55 @@ use quicksilver::{
 pub mod lib {
     use quicksilver::{
         geom::{Circle, Rectangle, Vector},
-        graphics::{Color, Element, Graphics, Image, Mesh, PixelFormat, Surface, Vertex},
+        graphics::{
+            blend::{BlendChannel, BlendFactor, BlendFunction, BlendInput, BlendMode},
+            Color, Element, Graphics, Image, Mesh, PixelFormat, Surface, Vertex,
+        },
         Input, Result, Settings, Window,
     };
 
+    fn draw_atlas(gfx: &mut Graphics, image: Image) {
+        gfx.clear(Color::WHITE);
+        gfx.set_blend_mode(Some(BlendMode {
+            equation: Default::default(),
+            function: BlendFunction::Same {
+                source: BlendFactor::Color {
+                    input: BlendInput::Source,
+                    channel: BlendChannel::Alpha,
+                    is_inverse: false,
+                },
+                destination: BlendFactor::Color {
+                    input: BlendInput::Source,
+                    channel: BlendChannel::Alpha,
+                    is_inverse: true,
+                },
+            },
+            global_color: [0.0; 4],
+        }));
+
+        let overlay_region = Rectangle::new(Vector::new(0.0, 0.0), image.size());
+        gfx.draw_image(&image, overlay_region);
+        gfx.fill_rect(&overlay_region, Color::BLUE.with_alpha(0.3));
+
+        gfx.set_blend_mode(Some(BlendMode {
+            equation: Default::default(),
+            function: BlendFunction::Same {
+                source: BlendFactor::One,
+                destination: BlendFactor::Zero,
+            },
+            global_color: [0.0; 4],
+        }));
+
+        let region = Rectangle::new(Vector::new(0.0, 0.0), Vector::new(100.0, 40.0));
+        gfx.draw_image(&image, region);
+        gfx.fill_rect(&region, Color::RED.with_alpha(0.1));
+    }
+
     pub async fn app(window: Window, mut gfx: Graphics, mut input: Input) -> Result<()> {
-        gfx.clear(Color::BLACK);
+        let img_atlas = Image::load(&gfx, "assets/atlas.png").await?;
 
-        let texture = Image::from_raw(&gfx, None, 512, 512, PixelFormat::RGBA)?;
-        let mut surface = Surface::new(&gfx, texture)?;
+        draw_atlas(&mut gfx, img_atlas);
 
-        gfx.fill_rect(
-            &Rectangle::new(Vector::new(0.0, 0.0), Vector::new(100.0, 100.0)),
-            Color::RED,
-        );
-        gfx.fill_circle(&Circle::new(Vector::new(400.0, 150.0), 50.0), Color::WHITE);
-        gfx.flush_surface(&surface)?;
-        gfx.clear(Color::BLACK);
-
-        let image = surface.detach().expect("The image failed to detach!");
-
-        gfx.draw_image(&image, Rectangle::new_sized(Vector::new(400.0, 300.0)));
-        gfx.draw_image(
-            &image,
-            Rectangle::new(Vector::new(400.0, 400.0), Vector::new(200.0, 200.0)),
-        );
         gfx.present(&window)?;
 
         loop {
