@@ -9,4 +9,5 @@ edition = "2021"
 quicksilver = { version = "0.4.0", default-features = false, features = [
   "saving",
   "font",
+  "ttf",
 ] }
