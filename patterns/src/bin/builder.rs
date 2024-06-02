@@ -1,5 +1,5 @@
 #[derive(Debug, Default, Clone)]
-pub enum Equiped {
+pub enum Equipped {
     #[default]
     Silver,
     Gold,
@@ -21,7 +21,7 @@ pub mod consuming_method {
     use std::fmt;
     #[derive(Debug, Default, Clone)]
     pub struct Bike {
-        equip: Equiped,
+        equip: Equipped,
         color: Option<String>,
         engine: Option<Engine>,
         _weel_front: Option<String>,
@@ -33,7 +33,7 @@ pub mod consuming_method {
     }
 
     impl BikeBuilder {
-        pub fn new(equip: Equiped) -> BikeBuilder {
+        pub fn new(equip: Equipped) -> BikeBuilder {
             BikeBuilder {
                 bike: Bike {
                     equip,
@@ -66,7 +66,7 @@ pub mod consuming_method {
     impl fmt::Display for Bike {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "Bike ")?;
-            write!(f, "equiped with {:?}, ", self.equip)?;
+            write!(f, "equipped with {:?}, ", self.equip)?;
 
             if let Some(ref engine) = self.engine {
                 write!(f, "having a {:?} engine, ", engine)?;
@@ -85,7 +85,7 @@ pub mod consuming_method {
     }
 
     pub fn run_demo() -> Result<()> {
-        let equip = Equiped::Gold;
+        let equip = Equipped::Gold;
 
         let bike = BikeBuilder::new(equip)
             .set_color("Metallic")
@@ -95,7 +95,7 @@ pub mod consuming_method {
         println!("Consuming Builder Patter:");
         println!("You have a {}", bike);
 
-        let bike_builder = BikeBuilder::new(Equiped::Platinum);
+        let bike_builder = BikeBuilder::new(Equipped::Platinum);
 
         let bike_1 = bike_builder
             .clone()
@@ -122,7 +122,7 @@ pub mod non_consuming_method {
 
     #[derive(Debug, Default, Clone)]
     pub struct Bike {
-        equip: Equiped,
+        equip: Equipped,
         color: Option<String>,
         engine: Option<Engine>,
         _weel_front: Option<String>,
@@ -134,7 +134,7 @@ pub mod non_consuming_method {
     }
 
     impl BikeBuilder {
-        pub fn new(equip: Equiped) -> BikeBuilder {
+        pub fn new(equip: Equipped) -> BikeBuilder {
             BikeBuilder {
                 bike: Bike {
                     equip,
@@ -172,7 +172,7 @@ pub mod non_consuming_method {
     impl fmt::Display for Bike {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "Bike ")?;
-            write!(f, "equiped with {:?}, ", self.equip)?;
+            write!(f, "equipped with {:?}, ", self.equip)?;
 
             if let Some(ref engine) = self.engine {
                 write!(f, "having a {:?} engine, ", engine)?;
@@ -191,7 +191,7 @@ pub mod non_consuming_method {
     }
 
     pub fn run() -> Result<()> {
-        let equip = Equiped::Gold;
+        let equip = Equipped::Gold;
         let bike = BikeBuilder::new(equip)
             .set_color("Dust")
             .set_engine(Engine::Hybrid)
@@ -200,7 +200,7 @@ pub mod non_consuming_method {
         println!("Consuming Builder Patter:");
         println!("You have a {}", bike);
 
-        let equip = Equiped::Platinum;
+        let equip = Equipped::Platinum;
         let bike_builder = BikeBuilder::new(equip);
 
         let bike_1 = bike_builder
@@ -222,6 +222,7 @@ pub mod non_consuming_method {
         Ok(())
     }
 }
+
 fn main() {
     println!("CONSUMING METHOD");
     consuming_method::run_demo().unwrap();
