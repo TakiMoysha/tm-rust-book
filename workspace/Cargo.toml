@@ -1,0 +1,12 @@
+[package]
+name = "workspace"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bcrypt = "0.15.1"
+clap = { version = "4.5.8", features = ["derive"] }
+thiserror = "1.0.61"
+
+[workspace]
+members = ["hexver"]

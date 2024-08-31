@@ -1,0 +1,10 @@
+[package]
+name = "hexver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7.5"
+anyhow = "1.0.86"
+serde = "1.0.204"
+tokio = { version = "1.38.0", features = ["full"] }

@@ -29,4 +29,3 @@ pub fn generate_map(size: Vector, level: i32) -> Vec<Tile> {
     }
     map
 }
-

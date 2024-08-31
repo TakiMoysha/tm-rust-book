@@ -1,0 +1,2 @@
+hexver-dev:
+    cargo run -p hexver
