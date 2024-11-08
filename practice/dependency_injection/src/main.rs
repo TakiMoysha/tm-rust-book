@@ -2,14 +2,18 @@ mod configuration_manager;
 mod data_collector;
 mod logging_service;
 mod message_service;
+mod monitorint_system;
 
 use chrono::{DateTime, Utc};
-use std::cell::OnceCell;
+use logging_service::{LoggingService, StdoutLogginService};
+use monitorint_system::MonitoringSystem;
+use std::time::Duration;
+use std::{cell::OnceCell, thread::sleep};
 use std::rc::Rc;
 
 use configuration_manager::ConfigurationManager;
 use data_collector::{ApiDataCollector, DataCollector, SqlDataCollector};
-use message_service::{SMTPMessageService, SMTPMessageServiceImpl};
+use message_service::{MessageService, SMTPMessageServiceImpl};
 
 pub struct DependencyContainer {
     // We will only want to read the configuration once
@@ -32,7 +36,7 @@ impl DependencyContainer {
         Utc::now()
     }
 
-    pub fn data_collector_impl(&self) -> impl DataCollector {
+    pub fn data_collector_impl(&self) -> impl DataCollector + '_ {
         let configuration_manager = self.configuration_manager();
         self.create_data_collector_dyn(configuration_manager)
     }
@@ -40,7 +44,7 @@ impl DependencyContainer {
     fn create_data_collector_dyn(
         &self,
         configuration_manager: &ConfigurationManager,
-    ) -> Box<dyn DataCollector> {
+    ) -> Box<dyn DataCollector + '_> {
         if let Some(api_key) = configuration_manager.get_api_key() {
             Box::new(ApiDataCollector::new(
                 api_key.to_string(),
@@ -56,7 +60,7 @@ impl DependencyContainer {
         }
     }
 
-    pub fn data_collector(&self) -> impl DataCollector {
+    pub fn data_collector(&self) -> impl DataCollector + '_ {
         let configuration_manager = self.configuration_manager();
         self.create_data_collector_dyn(configuration_manager)
     }
@@ -74,23 +78,24 @@ impl DependencyContainer {
     fn create_message_service_dyn(
         &self,
         configuration_manager: &ConfigurationManager,
-    ) -> impl SMTPMessageService {
+    ) -> impl MessageService {
         SMTPMessageServiceImpl::new(
             configuration_manager.get_username().to_string(),
             configuration_manager.get_pass().to_string(),
         )
     }
 
-    pub fn message_service(&self) -> impl SMTPMessageService {
+    pub fn message_service(&self) -> impl MessageService {
         let conf_manager = self.configuration_manager();
         self.create_message_service_dyn(conf_manager)
     }
 
-    fn create_logging_service(&self, alert_id: &str) -> logging_service::StdoutLogginService {
+    fn create_logging_service(&self, alert_id: &str) -> StdoutLogginService {
         logging_service::StdoutLogginService::new(alert_id)
     }
 
-    pub fn logging_service(&self) -> &logging_service::StdoutLogginService {
+    // LoggingService ('_) has the same lifetime as the DependencyContainer (&self)
+    pub fn logging_service(&self) -> impl LoggingService + '_ {
         self.logging_service
             .get_or_init(|| self.create_logging_service(&self.alert_id))
     }
@@ -107,5 +112,19 @@ impl DependencyContainer {
 }
 
 fn main() {
-    println!("!END!");
+    let dc = DependencyContainer::new();
+
+    for i in 1.. {
+        let alert_id = format!("Alert{}", i);
+
+        let dc = dc.new_scope(&alert_id);
+        let data_collector = dc.data_collector();
+        let message_service = dc.message_service();
+
+        let monitoring_system = MonitoringSystem::new(data_collector, message_service);
+
+        monitoring_system.check_alert();
+
+        sleep(Duration::from_secs(5));
+    }
 }

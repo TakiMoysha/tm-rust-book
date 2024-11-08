@@ -1,4 +1,4 @@
-pub trait SMTPMessageService {
+pub trait MessageService {
     fn send(&self, message: &str);
 }
 
@@ -13,7 +13,7 @@ impl SMTPMessageServiceImpl {
     }
 }
 
-impl SMTPMessageService for SMTPMessageServiceImpl {
+impl MessageService for SMTPMessageServiceImpl {
     fn send(&self, message: &str) {
         println!("Sending message: {}", message);
     }

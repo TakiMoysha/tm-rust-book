@@ -1,4 +1,4 @@
-use logging_service::LoggingService;
+use crate::logging_service::LoggingService;
 
 pub trait DataCollector {
     fn collect_data(&self) -> Vec<String>;
@@ -59,10 +59,9 @@ impl<L: LoggingService> ApiDataCollector<L> {
     }
 }
 
-impl<L: LoggingService> DataCollector for ApiDataCollector<L>
-{
+impl<L: LoggingService> DataCollector for ApiDataCollector<L> {
     fn collect_data(&self) -> Vec<String> {
-        let data = vec!["data1".to_string(), "data2".to_string()]
+        let data = vec!["data1".to_string(), "data2".to_string()];
 
         for d in data.iter() {
             self.logging_service.log(&d);
