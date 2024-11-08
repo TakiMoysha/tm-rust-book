@@ -1,3 +1,5 @@
+use logging_service::LoggingService;
+
 pub trait DataCollector {
     fn collect_data(&self) -> Vec<String>;
 }
@@ -34,10 +36,38 @@ impl DataCollector for SqlDataCollector {
     }
 }
 
-// упаковываем DataCollector в Box, что бы можно было использовать `impl DataCollector`
+// теперь любой DataCollector обернут в Box, что бы мы могли не указывать это явно
+// Box<dyn DataCollector> == impl DataCollector
 impl<T: DataCollector + ?Sized> DataCollector for Box<T> {
     fn collect_data(&self) -> Vec<String> {
         (**self).collect_data()
         // T.collect_data(self)
+    }
+}
+
+pub struct ApiDataCollector<L> {
+    api_key: String,
+    logging_service: L,
+}
+
+impl<L: LoggingService> ApiDataCollector<L> {
+    pub fn new(api_key: String, logging_service: L) -> Self {
+        Self {
+            api_key,
+            logging_service,
+        }
+    }
+}
+
+impl<L: LoggingService> DataCollector for ApiDataCollector<L>
+{
+    fn collect_data(&self) -> Vec<String> {
+        let data = vec!["data1".to_string(), "data2".to_string()]
+
+        for d in data.iter() {
+            self.logging_service.log(&d);
+        }
+
+        data
     }
 }

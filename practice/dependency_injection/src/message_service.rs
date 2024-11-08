@@ -9,8 +9,7 @@ pub struct SMTPMessageServiceImpl {
 
 impl SMTPMessageServiceImpl {
     pub fn new(username: String, password: String) -> Self {
-        // singleton
-        Self { username, password }
+        SMTPMessageServiceImpl { username, password }
     }
 }
 
