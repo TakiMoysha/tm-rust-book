@@ -5,6 +5,8 @@ mod logging_service;
 mod message_service;
 mod monitorint_system;
 mod notification_message_builder;
+mod types;
+mod repository;
 
 use std::{thread::sleep, time::Duration};
 

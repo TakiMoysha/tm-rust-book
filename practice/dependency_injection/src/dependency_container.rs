@@ -12,6 +12,8 @@ use crate::monitorint_system::MonitoringSystem;
 use crate::notification_message_builder::{
     DefaultNotificationMessageBuilder, NotificationMessageBuilder,
 };
+use crate::repository::{Repository, Sqlite};
+use crate::types::{AnotherSpecificType, SpecificType, TraitBasedType};
 
 pub struct DependencyContainer {
     // We will only want to read the configuration once
@@ -141,5 +143,74 @@ impl DependencyContainer {
             self.message_service(),
             self.notification_message_builder(),
         )
+    }
+
+    // ################### MOREOVER DI ################
+    #[allow(unused)]
+    fn create_trait_based_type(&self) -> impl TraitBasedType {
+        SpecificType::new()
+    }
+
+    #[allow(unused)]
+    pub fn trait_based_type(&self) -> impl TraitBasedType {
+        self.create_trait_based_type()
+    }
+
+    #[allow(unused)]
+    fn create_specific_type(&self) -> SpecificType {
+        SpecificType::new()
+    }
+
+    #[allow(unused)]
+    pub fn specific_type(&self) -> SpecificType {
+        self.create_specific_type()
+    }
+
+    // dynamic dispatching - needed when type is unknown on compile time and was unveild at runtime
+    #[allow(unused)]
+    fn create_dynamic_abstract(&self, arg: i32) -> Box<dyn TraitBasedType> {
+        if arg > 1 {
+            Box::new(SpecificType::new())
+        } else {
+            Box::new(AnotherSpecificType::new(None))
+        }
+    }
+
+    #[allow(unused)]
+    fn dynamic_abstract(&self) -> impl TraitBasedType {
+        let arg = 0;
+
+        self.create_trait_based_type()
+    }
+
+    // chaining dependencies - a deps requires some other deps or configuration
+    #[allow(unused)]
+    fn create_chaining_dep(
+        &self,
+        dep1: SpecificType,
+        dep2: impl TraitBasedType,
+    ) -> impl TraitBasedType {
+        SpecificType::new()
+    }
+
+    #[allow(unused)]
+    pub fn chaining_dep(&self) -> impl TraitBasedType {
+        self.create_chaining_dep(SpecificType::new(), AnotherSpecificType::new(Some(0)))
+    }
+
+    // async dependency
+    #[allow(unused)]
+    async fn create_async_service(
+        &self,
+        spec_dep: SpecificType,
+        trait_dep: impl TraitBasedType,
+    ) -> impl TraitBasedType {
+        SpecificType::new()
+    }
+
+    #[allow(unused)]
+    pub async fn impl_service(&self) -> impl TraitBasedType {
+        self.create_async_service(self.specific_type(), self.create_trait_based_type())
+            .await
     }
 }
