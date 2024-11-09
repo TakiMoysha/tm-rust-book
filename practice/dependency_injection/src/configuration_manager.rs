@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct ConfigurationManager {
     smtp_username: String,
     smtp_password: String,
@@ -24,11 +25,11 @@ impl ConfigurationManager {
     }
 
     pub fn get_database_conn(&self) -> Option<&str> {
-        self.database_conn.as_ref().map(|s| s.as_str())
+        self.database_conn.as_deref()
     }
 
     pub fn get_api_key(&self) -> Option<&str> {
-        self.api_key.as_ref().map(|s| s.as_str())
+        self.api_key.as_deref()
     }
 }
 

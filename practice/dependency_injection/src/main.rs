@@ -12,8 +12,8 @@ use dependency_container::DependencyContainer;
 
 #[tokio::main]
 async fn main() {
-    let config = configuration_manager::ConfigurationManager::new();
-    let dc = DependencyContainer::new(Some(config));
+    let main_config = configuration_manager::ConfigurationManager::new();
+    let dc = DependencyContainer::new(Some(main_config));
 
     for i in 1.. {
         let alert_id = format!("Alert{}", i);
