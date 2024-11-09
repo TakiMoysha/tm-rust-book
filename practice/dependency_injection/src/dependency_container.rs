@@ -22,28 +22,31 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub fn new() -> Self {
+    pub fn new(conf_manager: Option<ConfigurationManager>) -> Self {
         Self {
-            configuration_manager: Rc::new(OnceCell::new()),
+            configuration_manager: Rc::new(OnceCell::from(conf_manager.unwrap_or_default())),
             logging_service: AsyncOnceCell::new(),
             alert_id: Default::default(),
         }
     }
 
-    pub fn new_scope(&self, alert_id: &str) -> Self {
+    // ######################## UTILS ############################
+    pub fn new_scope(&self, alert_id: &str, config: Option<ConfigurationManager>) -> Self {
         Self {
             // clone the configuration manager
-            configuration_manager: self.configuration_manager.clone(),
+            configuration_manager: Rc::new(OnceCell::from(config.unwrap_or_default())),
             // reset the logging service
             logging_service: AsyncOnceCell::new(),
             alert_id: alert_id.to_string(),
         }
     }
 
+    #[allow(unused)]
     pub fn datetime(&self) -> DateTime<Utc> {
         Utc::now()
     }
 
+    // ######################## DI-SUPPORT ########################
     async fn create_data_collector<'a, F, L>(
         &self,
         configuration_manager: &ConfigurationManager,
@@ -103,12 +106,9 @@ impl DependencyContainer {
 
     // LoggingService ('_) has the same lifetime as the DependencyContainer (&self)
     pub async fn logging_service(&self) -> impl LoggingService + '_ {
-        let logging_service = self
-            .logging_service
+        self.logging_service
             .get_or_init(self.create_logging_service(&self.alert_id))
-            .await;
-
-        logging_service
+            .await
     }
 
     fn create_notification_message_builder(&self) -> impl NotificationMessageBuilder {

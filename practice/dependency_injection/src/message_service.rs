@@ -15,6 +15,6 @@ impl SMTPMessageServiceImpl {
 
 impl MessageService for SMTPMessageServiceImpl {
     fn send(&self, message: &str) {
-        println!("Sending message: {}", message);
+        println!("SMPT-Service: {}", message);
     }
 }

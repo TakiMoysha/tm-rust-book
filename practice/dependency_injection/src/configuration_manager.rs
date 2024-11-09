@@ -32,3 +32,8 @@ impl ConfigurationManager {
     }
 }
 
+impl Default for ConfigurationManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}

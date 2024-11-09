@@ -12,12 +12,13 @@ use dependency_container::DependencyContainer;
 
 #[tokio::main]
 async fn main() {
-    let dc = DependencyContainer::new();
+    let config = configuration_manager::ConfigurationManager::new();
+    let dc = DependencyContainer::new(Some(config));
 
     for i in 1.. {
         let alert_id = format!("Alert{}", i);
 
-        let dc = dc.new_scope(&alert_id);
+        let dc = dc.new_scope(&alert_id, None);
 
         let monitoring_system = dc.monitoring_system().await;
         monitoring_system.check_alert();
