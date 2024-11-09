@@ -1,3 +1,6 @@
+use std::time::Duration;
+use tokio::time::sleep;
+
 pub trait LoggingService {
     fn log(&self, msg: &str);
 }
@@ -13,7 +16,9 @@ pub struct StdoutLogginService {
 }
 
 impl StdoutLogginService {
-    pub fn new(alert_id: &str) -> Self {
+    pub async fn new(alert_id: &str) -> Self {
+        sleep(Duration::from_secs(2)).await; // async simulation
+
         StdoutLogginService {
             alert_id: alert_id.to_string(),
         }

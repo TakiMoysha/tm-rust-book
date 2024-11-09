@@ -10,7 +10,8 @@ use std::{thread::sleep, time::Duration};
 
 use dependency_container::DependencyContainer;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let dc = DependencyContainer::new();
 
     for i in 1.. {
@@ -18,9 +19,9 @@ fn main() {
 
         let dc = dc.new_scope(&alert_id);
 
-        let monitoring_system = dc.monitoring_system();
+        let monitoring_system = dc.monitoring_system().await;
         monitoring_system.check_alert();
-        dc.monitoring_system().check_alert();
+        dc.monitoring_system().await.check_alert();
 
         sleep(Duration::from_secs(5));
     }
