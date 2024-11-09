@@ -32,20 +32,17 @@ impl DependencyContainer {
         Utc::now()
     }
 
-    pub fn data_collector_impl(&self) -> impl DataCollector + '_ {
-        let configuration_manager = self.configuration_manager();
-        self.create_data_collector_dyn(configuration_manager)
-    }
-
-    fn create_data_collector_dyn(
+    fn create_data_collector_dyn<'a, L>(
         &self,
         configuration_manager: &ConfigurationManager,
-    ) -> Box<dyn DataCollector + '_> {
+        fn_logging_service: impl Fn() -> L,
+    ) -> Box<dyn DataCollector + 'a>
+    where
+        L: LoggingService + 'a,
+    {
         if let Some(api_key) = configuration_manager.get_api_key() {
-            Box::new(ApiDataCollector::new(
-                api_key.to_string(),
-                self.logging_service(),
-            ))
+            let logging_service = fn_logging_service();
+            Box::new(ApiDataCollector::new(api_key.to_string(), logging_service))
         } else {
             Box::new(SqlDataCollector::new(
                 configuration_manager
@@ -58,7 +55,7 @@ impl DependencyContainer {
 
     pub fn data_collector(&self) -> impl DataCollector + '_ {
         let configuration_manager = self.configuration_manager();
-        self.create_data_collector_dyn(configuration_manager)
+        self.create_data_collector_dyn(configuration_manager, || self.logging_service())
     }
 
     fn create_configuration_manager(&self) -> ConfigurationManager {
