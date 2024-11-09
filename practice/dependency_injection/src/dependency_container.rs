@@ -1,4 +1,5 @@
 use crate::logging_service::{LoggingService, StdoutLogginService};
+use crate::monitorint_system::MonitoringSystem;
 use crate::notification_message_builder::{
     DefaultNotificationMessageBuilder, NotificationMessageBuilder,
 };
@@ -111,5 +112,29 @@ impl DependencyContainer {
 
     pub fn notification_message_builder(&self) -> impl NotificationMessageBuilder {
         self.create_notification_message_builder()
+    }
+
+    fn create_monitoring_system(
+        &self,
+        data_collector: impl DataCollector,
+        msg_service: impl MessageService,
+        notification_message_builder: impl NotificationMessageBuilder,
+    ) -> MonitoringSystem<impl DataCollector, impl MessageService, impl NotificationMessageBuilder>
+    {
+        MonitoringSystem::new(data_collector, msg_service, notification_message_builder)
+    }
+
+    pub fn monitoring_system(
+        &self,
+    ) -> MonitoringSystem<
+        impl DataCollector + '_,
+        impl MessageService + '_,
+        impl NotificationMessageBuilder + '_,
+    > {
+        self.create_monitoring_system(
+            self.data_collector(),
+            self.message_service(),
+            self.notification_message_builder(),
+        )
     }
 }

@@ -9,7 +9,6 @@ mod notification_message_builder;
 use std::{thread::sleep, time::Duration};
 
 use dependency_container::DependencyContainer;
-use monitorint_system::MonitoringSystem;
 
 fn main() {
     let dc = DependencyContainer::new();
@@ -19,13 +18,9 @@ fn main() {
 
         let dc = dc.new_scope(&alert_id);
 
-        let data_collector = dc.data_collector();
-        let message_service = dc.message_service();
-        let msg_builder = dc.notification_message_builder();
-
-        let monitoring_system = MonitoringSystem::new(data_collector, message_service, msg_builder);
-
+        let monitoring_system = dc.monitoring_system();
         monitoring_system.check_alert();
+        dc.monitoring_system().check_alert();
 
         sleep(Duration::from_secs(5));
     }
