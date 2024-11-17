@@ -12,6 +12,10 @@ In config file addresses order by priority, (0, 1, 2, ...).
 Always selected the first available server with highest priority.
 Automation switching to higher priority addresses if they become available after the initial connection.
 
+### Problems
+
+- **Picker::new_fi_picker - Lifetime Problem**
+
 ## References
 
 1. [Балансировщик нагрузки с приоритизацией / habr.com](https://habr.com/ru/companies/vk/articles/858290/)

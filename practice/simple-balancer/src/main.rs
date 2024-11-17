@@ -1,11 +1,17 @@
-use std::collections::HashMap;
-
 #[derive(Debug, Default)]
 pub struct BuildOptions;
 #[derive(Debug, Default)]
 pub struct ClientConnection;
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct SubConnection;
+#[derive(Debug, Clone, Default)]
+pub struct ConnectionAttributes {
+    pub priority: usize,
+}
+#[derive(Debug, Clone, Default)]
+pub struct SubConnectionInfo {
+    pub attributes: ConnectionAttributes,
+}
 #[derive(Debug, Default)]
 pub struct AddressMap;
 #[derive(Debug, Default)]
@@ -14,6 +20,91 @@ pub struct ConnectivityStateEvaluator;
 pub enum ConnectivityState {
     #[default]
     GRPC,
+}
+
+impl ConnectionAttributes {
+    pub fn value(&self, key: &str) -> Option<&usize> {
+        if key == "index" {
+            Some(&self.priority)
+        } else {
+            None
+        }
+    }
+}
+
+mod picker {
+    use std::collections::HashMap;
+
+    use crate::{SubConnection, SubConnectionInfo};
+
+    #[derive(Debug, Clone)]
+    pub struct PickResult {
+        pub sub_conn: Option<SubConnection>,
+    }
+
+    #[derive(Debug)]
+    pub struct PickInfo;
+
+    #[derive(Debug)]
+    pub struct ErrNoSubConnAvailable;
+
+    pub trait Picker {
+        fn pick(&self, info: PickInfo) -> Result<PickResult, Option<&ErrNoSubConnAvailable>>;
+    }
+
+    pub struct FirstIdxPicker {
+        result: PickResult,
+        err: Option<ErrNoSubConnAvailable>,
+    }
+
+    impl Picker for FirstIdxPicker {
+        fn pick(&self, info: PickInfo) -> Result<PickResult, Option<&ErrNoSubConnAvailable>> {
+            if let Some(err) = &self.err {
+                Err(Some(err.clone()))
+            } else {
+                Ok(self.result.clone())
+            }
+        }
+    }
+
+    pub struct PickerBuildInfo {
+        pub ready_scs: HashMap<SubConnection, SubConnectionInfo>,
+    }
+
+    pub fn new_fi_picker(info: PickerBuildInfo) -> Box<impl Picker> {
+        if info.ready_scs.is_empty() {
+            return Box::new(FirstIdxPicker {
+                result: PickResult { sub_conn: None },
+                err: Some(ErrNoSubConnAvailable),
+            });
+        }
+
+        let mut min_indx = usize::MAX;
+        let mut selected_conn: Option<SubConnection> = None;
+
+        for (sc, sc_info) in info.ready_scs.iter() {
+            if let Some(indx) = sc_info.attributes.value("index") {
+                if *indx < min_indx {
+                    min_indx = *indx;
+                    selected_conn = Some(sc.clone());
+                }
+            }
+        }
+
+        if let Some(conn) = selected_conn {
+            return Box::new(FirstIdxPicker {
+                result: PickResult {
+                    sub_conn: Some(conn),
+                },
+                err: None,
+            });
+        }
+
+        Box::new(FirstIdxPicker {
+            result: PickResult { sub_conn: None },
+            err: Some(ErrNoSubConnAvailable),
+        })
+    }
 }
 
 mod resolver {
@@ -97,6 +188,16 @@ mod resolver {
 
     fn register_resolver(resolver_builder: ResolverBuilder) {
         println!("Resolver Registered with {:?}", resolver_builder.addresses);
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn builder_should_create_resolver() {
+            todo!()
+        }
     }
 }
 
