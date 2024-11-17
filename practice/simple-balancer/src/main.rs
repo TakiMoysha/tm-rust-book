@@ -34,7 +34,7 @@ mod resolver {
     // * Providing addresses with priorities to the balancer;
     // * Error messages when addresses are unavailable.
     struct Resolver {
-        ctx: std::sync::mpsc::Receiver<()>,
+        ctx: Arc<Mutex<std::sync::mpsc::Receiver<()>>>,
         target: String,
         cc: ClientConnection,
         addresses_store: Vec<Address>,
