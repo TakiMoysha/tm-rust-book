@@ -1,0 +1,5 @@
+[servers]
+blob-1 = { ip = "127.0.0.2", priorited = 8 }
+blob-2 = { ip = "127.0.0.2", priorited = 8 }
+blob-3 = { ip = "127.0.0.2", priorited = 8 }
+blob-4 = { ip = "127.0.0.2", priorited = 8 }
