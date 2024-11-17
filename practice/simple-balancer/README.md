@@ -15,6 +15,8 @@ Automation switching to higher priority addresses if they become available after
 ### Problems
 
 - **Picker::new_fi_picker - Lifetime Problem**
+- **Comparsion with enum** - need derive `PartialEq` or using `matches!` macro.
+-
 
 ## References
 
