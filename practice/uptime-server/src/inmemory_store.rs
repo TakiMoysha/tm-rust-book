@@ -1,7 +1,7 @@
-use std::sync::Mutex;
 use std::collections::HashMap;
+use std::sync::Mutex;
 
-use crate::types::{Address, ServiceAlias};
+use crate::types::{ServiceAlias, URL};
 
 #[derive(Debug)]
 pub enum StoreError {
@@ -12,7 +12,7 @@ pub enum StoreError {
 }
 
 pub struct InMemoryStore {
-    services: Mutex<HashMap<ServiceAlias, Address>>,
+    services: Mutex<HashMap<ServiceAlias, URL>>,
 }
 impl InMemoryStore {
     pub fn new() -> Self {
@@ -23,21 +23,21 @@ impl InMemoryStore {
 }
 
 pub trait Repository: Send + Sync {
-    fn all(&self) -> Result<HashMap<ServiceAlias, Address>, StoreError>;
+    fn all(&self) -> Result<HashMap<ServiceAlias, URL>, StoreError>;
 
-    fn get(&self, key: ServiceAlias) -> Result<Address, StoreError>;
+    fn get(&self, key: ServiceAlias) -> Result<URL, StoreError>;
 
     fn delete(&self, key: ServiceAlias) -> Result<String, StoreError>;
 
-    fn insert(&self, key: ServiceAlias, value: Address) -> Result<(), StoreError>;
+    fn insert(&self, key: ServiceAlias, value: URL) -> Result<(), StoreError>;
 }
 
 impl Repository for InMemoryStore {
-    fn all(&self) -> Result<HashMap<ServiceAlias, Address>, StoreError> {
+    fn all(&self) -> Result<HashMap<ServiceAlias, URL>, StoreError> {
         Ok(self.services.lock().unwrap().clone())
     }
 
-    fn get(&self, key: ServiceAlias) -> Result<Address, StoreError> {
+    fn get(&self, key: ServiceAlias) -> Result<URL, StoreError> {
         self.services
             .lock()
             .unwrap()
@@ -52,7 +52,7 @@ impl Repository for InMemoryStore {
         Ok(key)
     }
 
-    fn insert(&self, key: ServiceAlias, value: Address) -> Result<(), StoreError> {
+    fn insert(&self, key: ServiceAlias, value: URL) -> Result<(), StoreError> {
         self.services
             .lock()
             .unwrap()
@@ -68,16 +68,16 @@ mod tests {
 
     #[test]
     fn should_insert_and_get_services() {
-        let service_1_alias = "local_server".to_string();
-        let service_1_address = "http://192.168.1.1:8000/api/heartbeat".to_string();
-        let service_2_alias = "remote_server".to_string();
-        let service_2_address = "http://192.168.1.1:8080/api/heartbeat".to_string();
+        let s1_alias = "local_server".to_string();
+        let s1_url = "http://192.168.1.1:8000/api/heartbeat".to_string();
+        let s2_alias = "remote_server".to_string();
+        let s2_url = "http://192.168.1.1:8080/api/heartbeat".to_string();
 
         let store = InMemoryStore::new();
-        store.insert(service_1_alias.clone(), service_1_address.clone());
-        store.insert(service_2_alias.clone(), service_2_address.clone());
+        store.insert(s1_alias.clone(), s1_url.clone()).unwrap();
+        store.insert(s2_alias.clone(), s2_url.clone()).unwrap();
 
-        assert_eq!(service_1_address, store.get(service_1_alias).unwrap());
-        assert_eq!(service_2_address, store.get(service_2_alias).unwrap());
+        assert_eq!(s1_url, store.get(s1_alias).unwrap());
+        assert_eq!(s2_url, store.get(s2_alias).unwrap());
     }
 }

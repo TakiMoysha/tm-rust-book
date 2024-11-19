@@ -18,7 +18,7 @@ pub async fn get_webservices(services_store: &State<InMemoryStore>) -> String {
 
     let service_list = all_services
         .iter()
-        .map(|(name, address)| format!("<li>{} [{}]</li>", name, address))
+        .map(|(name, url)| format!("<li>{} [{}]</li>", name, url))
         .collect::<Vec<String>>()
         .join("");
 
@@ -41,5 +41,3 @@ pub async fn blocking_task() -> io::Result<Vec<u8>> {
         .map_err(|e| io::Error::new(io::ErrorKind::Interrupted, e))??;
     Ok(vec)
 }
-
-
