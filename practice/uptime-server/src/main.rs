@@ -17,7 +17,7 @@ mod app {
 }
 
 mod handlers {
-    use std::{io, sync::Arc};
+    use std::{collections::HashMap, io, sync::Arc};
 
     use crate::inmemory_store::{InMemoryStore, Repository};
     use futures::lock::Mutex;
@@ -33,8 +33,15 @@ mod handlers {
     }
 
     #[get("/webservices")]
-    pub async fn get_webservices() {
-        // format!("<h1>Services</h1>", store.get("webservices".to_string()))
+    pub async fn get_webservices(services_store: &State<InMemoryStore>) -> String {
+        let all_services = services_store.all().unwrap();
+        let mut page = String::from("<h1>Services</h1><ol>");
+        for (service_name, service_address) in all_services.iter() {
+            let line = format!("<li>{} [{}]</li>", service_name, service_address);
+            page.push_str(&line);
+        }
+        page.push_str("</ol>");
+        page
     }
 
     #[post("/webservices")]
@@ -62,18 +69,19 @@ use rocket::{launch, routes};
 #[launch]
 fn rocket() -> _ {
     let store = InMemoryStore::new();
-    let res_1 = store.insert(
-        "local_server".to_string(),
-        "http://192.168.1.1:8000/api/heartbeat".to_string(),
-    );
+    store
+        .insert(
+            "local_server".to_string(),
+            "http://192.168.1.1:8000/api/heartbeat".to_string(),
+        )
+        .unwrap();
 
-    println!("{:?}", res_1);
-    let res_2 = store.insert(
-        "remote_server".to_string(),
-        "http://192.168.1.1:8000/api/heartbeat".to_string(),
-    );
-
-    println!("{:?}", res_2);
+    store
+        .insert(
+            "remote_server".to_string(),
+            "http://192.168.1.1:8000/api/heartbeat".to_string(),
+        )
+        .unwrap();
 
     rocket::build()
         .manage(store)
