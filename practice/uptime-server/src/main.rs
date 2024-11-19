@@ -21,6 +21,7 @@ mod handlers {
 
     use crate::inmemory_store::{InMemoryStore, Repository};
     use futures::lock::Mutex;
+    use http::ext::IntoCollection;
     use rocket::*;
     use tokio::{
         task::spawn_blocking,
@@ -35,13 +36,14 @@ mod handlers {
     #[get("/webservices")]
     pub async fn get_webservices(services_store: &State<InMemoryStore>) -> String {
         let all_services = services_store.all().unwrap();
-        let mut page = String::from("<h1>Services</h1><ol>");
-        for (service_name, service_address) in all_services.iter() {
-            let line = format!("<li>{} [{}]</li>", service_name, service_address);
-            page.push_str(&line);
-        }
-        page.push_str("</ol>");
-        page
+
+        let service_list = all_services
+            .iter()
+            .map(|(name, address)| format!("<li>{} [{}]</li>", name, address))
+            .collect::<Vec<String>>()
+            .join("");
+
+        format!("<h1>Services</h1><ol>{}</ol>", service_list)
     }
 
     #[post("/webservices")]
