@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chrono = "0.4.38"
+reqwest = "0.12.9"
 rocket = { version = "0.5.1", features = ["secrets"] }

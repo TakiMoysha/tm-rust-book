@@ -7,8 +7,8 @@ use crate::types::{ServiceAlias, URL};
 pub enum StoreError {
     Unknow,
     NotFound,
-    InsertError,
     LockError,
+    InsertError,
 }
 
 pub struct InMemoryStore {
