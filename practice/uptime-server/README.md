@@ -6,7 +6,7 @@
 
 **Async tests**
 
-**_**
+**Testing infinite loop**
 
 # References
 

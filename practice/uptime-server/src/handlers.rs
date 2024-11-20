@@ -16,29 +16,50 @@ mod monitoring {
     use chrono::DateTime;
     use rocket::tokio::time::interval;
 
+    use crate::inmemory_store::InMemoryStore;
+
     // check url servie status,
     // if website working - save to db working point
     // if website not working - save to db not working point
-    async fn check_website(alias: &str, url: &str) {
-        let mut interval = interval(Duration::from_secs(60));
+    async fn check_site_health(alias: &str, url: &str, store: InMemoryStore) {
+        let mut interval = interval(Duration::from_secs(10));
 
         loop {
             interval.tick().await;
-            let response = reqwest::get(url).await.unwrap().text().await.unwrap();
-            let time_point: DateTime<Utc> = SystemTime::now().into();
-            println!("{} [SERVICE:{}] - {}", time_point, alias, response);
+            let response = reqwest::get(url).await.unwrap();
+            let status_code = response.status();
+            let time_point = SystemTime::now();
+            let response_text = response.text().await.unwrap();
+
+            store
+                .save_health_point(alias, time_point, status_code, response_text)
+                .unwrap();
         }
     }
 
     #[cfg(test)]
     mod tests {
+        use std::sync::Arc;
+
         use super::*;
-        use rocket::tokio;
+        use rocket::tokio::{self, sync::Mutex};
 
         #[tokio::test]
         async fn should_check_website() {
-            check_website("test_site", "https://reqres.in/api/users/1").await;
-            todo!();
+            let store = Arc::new(Mutex::from(InMemoryStore::new()));
+            let thr = std::thread::spawn(move || {
+                check_site_health(
+                    "test_site",
+                    "https://reqres.in/api/users/1".into(),
+                    // store.lock(),
+                );
+            });
+
+            // tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+            // thr.join().unwrap();
+            //
+            // let all_services = store.get_health_points_by_alias("test_site").unwrap();
+            // println!("{:?}", all_services)
         }
     }
 }

@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::time::SystemTime;
+
+use reqwest::StatusCode;
 
 use crate::types::{ServiceAlias, URL};
 
@@ -11,14 +14,55 @@ pub enum StoreError {
     InsertError,
 }
 
+#[derive(Debug, Clone)]
+pub struct HealthPoint {
+    alias: ServiceAlias,
+    time_point: SystemTime,
+    status_code: StatusCode,
+    response_text: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct InMemoryStore {
     services: Mutex<HashMap<ServiceAlias, URL>>,
+    health_points: Mutex<Vec<HealthPoint>>,
 }
 impl InMemoryStore {
     pub fn new() -> Self {
         Self {
             services: Mutex::new(HashMap::new()),
+            health_points: Mutex::new(Vec::new()),
         }
+    }
+
+    pub fn save_health_point(
+        &self,
+        alias: &str,
+        time_point: std::time::SystemTime,
+        status_code: reqwest::StatusCode,
+        response_text: String,
+    ) -> Result<(), StoreError> {
+        self.health_points.lock().unwrap().push(HealthPoint {
+            alias: alias.to_string(),
+            time_point,
+            status_code,
+            response_text,
+        });
+
+        Ok(())
+    }
+
+    pub fn get_health_points_by_alias(&self, alias: &str) -> Result<Vec<HealthPoint>, StoreError> {
+        let server_points = self
+            .health_points
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|record| record.alias == alias)
+            .cloned()
+            .collect();
+
+        Ok(server_points)
     }
 }
 
