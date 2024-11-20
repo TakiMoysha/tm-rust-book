@@ -4,6 +4,8 @@
 
 * [ ] Filter time points by time range;
 * [ ] FillDataGaps for timeframe without data;
+* [ ] Removed website from watching list;
+* [ ]
 
 ## Problems
 
