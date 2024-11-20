@@ -22,7 +22,7 @@ pub struct HealthPoint {
     response_text: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct InMemoryStore {
     services: Mutex<HashMap<ServiceAlias, URL>>,
     health_points: Mutex<Vec<HealthPoint>>,
@@ -34,36 +34,6 @@ impl InMemoryStore {
             health_points: Mutex::new(Vec::new()),
         }
     }
-
-    pub fn save_health_point(
-        &self,
-        alias: &str,
-        time_point: std::time::SystemTime,
-        status_code: reqwest::StatusCode,
-        response_text: String,
-    ) -> Result<(), StoreError> {
-        self.health_points.lock().unwrap().push(HealthPoint {
-            alias: alias.to_string(),
-            time_point,
-            status_code,
-            response_text,
-        });
-
-        Ok(())
-    }
-
-    pub fn get_health_points_by_alias(&self, alias: &str) -> Result<Vec<HealthPoint>, StoreError> {
-        let server_points = self
-            .health_points
-            .lock()
-            .unwrap()
-            .iter()
-            .filter(|record| record.alias == alias)
-            .cloned()
-            .collect();
-
-        Ok(server_points)
-    }
 }
 
 pub trait Repository: Send + Sync {
@@ -74,6 +44,17 @@ pub trait Repository: Send + Sync {
     fn delete(&self, key: ServiceAlias) -> Result<String, StoreError>;
 
     fn insert(&self, key: ServiceAlias, value: URL) -> Result<(), StoreError>;
+
+    fn get_health_points_by_alias(&self, key: ServiceAlias)
+        -> Result<Vec<HealthPoint>, StoreError>;
+
+    fn save_health_point(
+        &self,
+        key: ServiceAlias,
+        time_point: std::time::SystemTime,
+        status_code: reqwest::StatusCode,
+        response_text: String,
+    ) -> Result<(), StoreError>;
 }
 
 impl Repository for InMemoryStore {
@@ -101,6 +82,39 @@ impl Repository for InMemoryStore {
             .lock()
             .unwrap()
             .insert(key.clone(), value.clone());
+
+        Ok(())
+    }
+
+    fn get_health_points_by_alias(
+        &self,
+        key: ServiceAlias,
+    ) -> Result<Vec<HealthPoint>, StoreError> {
+        let server_points = self
+            .health_points
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|record| record.alias == key)
+            .cloned()
+            .collect();
+
+        Ok(server_points)
+    }
+
+    fn save_health_point(
+        &self,
+        key: ServiceAlias,
+        time_point: std::time::SystemTime,
+        status_code: reqwest::StatusCode,
+        response_text: String,
+    ) -> Result<(), StoreError> {
+        self.health_points.lock().unwrap().push(HealthPoint {
+            alias: key,
+            time_point,
+            status_code,
+            response_text,
+        });
 
         Ok(())
     }

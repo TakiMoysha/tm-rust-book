@@ -1,5 +1,12 @@
 # Big Picture
 
+## Features
+
+* [ ] Filter time points by time range;
+* [ ] FillDataGaps for timeframe without data;
+
+## Problems
+
 **Generic InMemoryStore** - simple store for debugging and developement purposes. Implemented as a repository.
 
 **Thread Safe Structure** - InMemoryStore should be thread safe.

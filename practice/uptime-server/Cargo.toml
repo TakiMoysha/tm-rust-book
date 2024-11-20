@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.38"
-reqwest = "0.12.9"
+reqwest = { version = "0.12.9", features = ["blocking"] }
 rocket = { version = "0.5.1", features = ["secrets"] }

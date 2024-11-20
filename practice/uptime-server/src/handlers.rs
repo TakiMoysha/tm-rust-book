@@ -10,30 +10,51 @@ use tokio::{
 mod database {}
 
 mod monitoring {
+    use std::sync::Arc;
     use std::time::{Duration, SystemTime};
 
     use chrono::offset::Utc;
     use chrono::DateTime;
+    use rocket::futures::lock::Mutex;
     use rocket::tokio::time::interval;
 
-    use crate::inmemory_store::InMemoryStore;
+    use crate::inmemory_store::{InMemoryStore, Repository};
 
-    // check url servie status,
-    // if website working - save to db working point
-    // if website not working - save to db not working point
-    async fn check_site_health(alias: &str, url: &str, store: InMemoryStore) {
-        let mut interval = interval(Duration::from_secs(10));
+    pub struct HealthWatcher {
+        error: Option<String>,
+        store: Mutex<InMemoryStore>,
+    }
 
-        loop {
-            interval.tick().await;
-            let response = reqwest::get(url).await.unwrap();
-            let status_code = response.status();
-            let time_point = SystemTime::now();
-            let response_text = response.text().await.unwrap();
+    impl HealthWatcher {
+        pub fn new(store: InMemoryStore) -> HealthWatcher {
+            HealthWatcher {
+                error: None,
+                store: Mutex::new(store),
+            }
+        }
+        // check url servie status,
+        // if website working - save to db working point
+        // if website not working - save to db not working point
+        async fn check_site_health(&self, alias: &str, url: &str) {
+            let mut interval = interval(Duration::from_secs(10));
 
-            store
-                .save_health_point(alias, time_point, status_code, response_text)
-                .unwrap();
+            loop {
+                interval.tick().await;
+                let response = reqwest::get(url).await.unwrap();
+                let status_code = response.status();
+                let time_point = SystemTime::now();
+                let response_text = response.text().await.unwrap();
+
+                self.store
+                    .lock()
+                    .await
+                    .save_health_point(alias.to_string(), time_point, status_code, response_text)
+                    .unwrap();
+
+                if self.error.is_some() {
+                    break;
+                }
+            }
         }
     }
 
@@ -47,19 +68,22 @@ mod monitoring {
         #[tokio::test]
         async fn should_check_website() {
             let store = Arc::new(Mutex::from(InMemoryStore::new()));
-            let thr = std::thread::spawn(move || {
-                check_site_health(
-                    "test_site",
-                    "https://reqres.in/api/users/1".into(),
-                    // store.lock(),
-                );
+            let c_store = Arc::clone(&store);
+
+            let mut watcher = HealthWatcher::new(c_store);
+            let thr = tokio::spawn(async move {
+                watcher
+                    .check_site_health("test_site", "https://reqres.in/api/users/1")
+                    .await;
             });
 
-            // tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
-            // thr.join().unwrap();
-            //
-            // let all_services = store.get_health_points_by_alias("test_site").unwrap();
-            // println!("{:?}", all_services)
+            // wait 60 seconds
+            println!("wait 60 seconds");
+            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+            watcher.error = Some("error".to_string());
+
+            let all_services = store.get("test_site".to_string()).unwrap();
+            println!("{:?}", all_services)
         }
     }
 }
