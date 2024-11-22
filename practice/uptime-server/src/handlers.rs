@@ -12,7 +12,6 @@ mod database {}
 mod monitoring {
     use rocket::tokio::{sync::Mutex, time::interval};
     use std::{
-        rc::Rc,
         sync::Arc,
         time::{Duration, SystemTime},
     };
@@ -33,9 +32,11 @@ mod monitoring {
             }
         }
 
-        // // check url servie status,
-        // // if website working - save to db working point
-        // // if website not working - save to db not working point
+        // async fn
+
+        // check url servie status,
+        // if website working - save to db working point
+        // if website not working - save to db not working point
         async fn check_site_health(&self, alias: &str, url: &str, signal: &Arc<Mutex<bool>>) {
             let mut interval = interval(Duration::from_secs(5));
 
@@ -65,49 +66,6 @@ mod monitoring {
             println!("End of loop");
         }
     }
-
-    // trait AtomicWatcher: Send + Sync {
-    //     async fn check_site_health(&self, alias: &str, url: &str);
-    //     async fn set_error(&mut self, msg: String);
-    // }
-    //
-    // impl AtomicWatcher for HealthWatcher {
-    //     // check url servie status,
-    //     // if website working - save to db working point
-    //     // if website not working - save to db not working point
-    //     async fn check_site_health(&self, alias: &str, url: &str) {
-    //         let mut interval = interval(Duration::from_secs(5));
-    //
-    //         loop {
-    //             interval.tick().await;
-    //             let response = reqwest::get(url).await.unwrap();
-    //             let status_code = response.status();
-    //             let time_point = SystemTime::now();
-    //             let response_text = response.text().await.unwrap();
-    //
-    //             println!("error: {:?}, save... ", self.error);
-    //             self.store
-    //                 .lock()
-    //                 .await
-    //                 .save_health_point(alias.to_string(), time_point, status_code, response_text)
-    //                 .unwrap();
-    //
-    //             // if *signal {
-    //             //     println!("error in watcher, break loop");
-    //             //     break;
-    //             // }
-    //             if self.error.is_some() {
-    //                 println!("error in watcher, break loop");
-    //                 break;
-    //             }
-    //         }
-    //         println!("End of loop");
-    //     }
-    //
-    //     async fn set_error(&mut self, msg: String) {
-    //         self.error = Some(msg);
-    //     }
-    // }
 
     #[cfg(test)]
     mod tests {
@@ -214,4 +172,14 @@ pub async fn blocking_task() -> io::Result<Vec<u8>> {
         .await
         .map_err(|e| io::Error::new(io::ErrorKind::Interrupted, e))??;
     Ok(vec)
+}
+
+#[get("/counter")]
+pub async fn get_counter() -> String {
+    format!("counter")
+}
+
+#[post("/api/counts")]
+pub async fn post_coutner() -> String {
+    format!("counter")
 }
