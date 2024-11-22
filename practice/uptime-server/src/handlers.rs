@@ -10,13 +10,12 @@ use tokio::{
 mod database {}
 
 mod monitoring {
-    use std::sync::Arc;
-    use std::time::{Duration, SystemTime};
-
-    use chrono::offset::Utc;
-    use chrono::DateTime;
-    use rocket::futures::lock::Mutex;
-    use rocket::tokio::time::interval;
+    use rocket::tokio::{sync::Mutex, time::interval};
+    use std::{
+        rc::Rc,
+        sync::Arc,
+        time::{Duration, SystemTime},
+    };
 
     use crate::inmemory_store::{InMemoryStore, Repository};
 
@@ -26,17 +25,62 @@ mod monitoring {
     }
 
     impl HealthWatcher {
-        pub fn new(store: InMemoryStore) -> HealthWatcher {
+        pub fn new(store_p: InMemoryStore) -> HealthWatcher {
             HealthWatcher {
                 error: None,
-                store: Mutex::new(store),
+                store: Mutex::new(store_p),
             }
         }
+
+        // // check url servie status,
+        // // if website working - save to db working point
+        // // if website not working - save to db not working point
+        // async fn check_site_health(&self, alias: &str, url: &str) {
+        //     let mut interval = interval(Duration::from_secs(5));
+        //
+        //     loop {
+        //         interval.tick().await;
+        //         let response = reqwest::get(url).await.unwrap();
+        //         let status_code = response.status();
+        //         let time_point = SystemTime::now();
+        //         let response_text = response.text().await.unwrap();
+        //
+        //         println!("save ...");
+        //         self.store
+        //             .lock()
+        //             .await
+        //             .save_health_point(alias.to_string(), time_point, status_code, response_text)
+        //             .unwrap();
+        //
+        //         // if *signal {
+        //         //     println!("error in watcher, break loop");
+        //         //     break;
+        //         // }
+        //         if self.error.is_some() {
+        //             println!("error in watcher, break loop");
+        //             break;
+        //         }
+        //     }
+        //     println!("End of loop");
+        // }
+        //
+        // async fn set_error(&mut self, msg: String) {
+        //     self.error = Some(msg);
+        // }
+        //
+    }
+
+    trait AtomicWatcher: Send + Sync {
+        async fn check_site_health(&self, alias: &str, url: &str);
+        async fn set_error(&mut self, msg: String);
+    }
+
+    impl AtomicWatcher for HealthWatcher {
         // check url servie status,
         // if website working - save to db working point
         // if website not working - save to db not working point
         async fn check_site_health(&self, alias: &str, url: &str) {
-            let mut interval = interval(Duration::from_secs(10));
+            let mut interval = interval(Duration::from_secs(5));
 
             loop {
                 interval.tick().await;
@@ -45,45 +89,101 @@ mod monitoring {
                 let time_point = SystemTime::now();
                 let response_text = response.text().await.unwrap();
 
+                println!("save ...");
                 self.store
                     .lock()
                     .await
                     .save_health_point(alias.to_string(), time_point, status_code, response_text)
                     .unwrap();
 
+                // if *signal {
+                //     println!("error in watcher, break loop");
+                //     break;
+                // }
                 if self.error.is_some() {
+                    println!("error in watcher, break loop");
                     break;
                 }
             }
+            println!("End of loop");
+        }
+
+        async fn set_error(&mut self, msg: String) {
+            self.error = Some(msg);
         }
     }
 
     #[cfg(test)]
     mod tests {
-        use std::sync::Arc;
+        use std::{
+            borrow::Borrow,
+            cell::{Cell, RefCell},
+            rc::Rc,
+            sync::Arc,
+        };
 
         use super::*;
-        use rocket::tokio::{self, sync::Mutex};
+        use rocket::tokio::{self, time};
 
         #[tokio::test]
-        async fn should_check_website() {
-            let store = Arc::new(Mutex::from(InMemoryStore::new()));
-            let c_store = Arc::clone(&store);
+        async fn should_shared_state_between_threads() {
+            let for_thread_value = Arc::new(Mutex::new(0));
+            let for_control_value = for_thread_value.clone();
 
-            let mut watcher = HealthWatcher::new(c_store);
             let thr = tokio::spawn(async move {
-                watcher
+                loop {
+                    if *for_thread_value.lock().await == 10 {
+                        break;
+                    }
+
+                    *for_thread_value.lock().await += 3;
+                    time::sleep(tokio::time::Duration::from_secs(1)).await;
+                }
+            });
+
+            println!("wait");
+            time::sleep(tokio::time::Duration::from_secs(3)).await;
+            println!("mod");
+            *for_control_value.lock().await = 7;
+            let _ = thr.await;
+            println!("stopped");
+
+            let value_lock = for_control_value.lock().await;
+            println!("{:?} = {:?}", for_control_value, *value_lock);
+        }
+
+        #[ignore = "wip"]
+        #[tokio::test]
+        async fn should_check_website() {
+            let store = InMemoryStore::new();
+            let mut watcher = Arc::new(HealthWatcher::new(store));
+            let r_store = Rc::new(&watcher);
+            // let watcher_p = Cell::new(&watcher);
+            let stop_signal = Arc::new(&mut false);
+            let _watcher = Arc::clone(&watcher);
+
+            let thr = tokio::spawn(async move {
+                // let _watcher = Arc::clone(&watcher);
+                (*watcher)
                     .check_site_health("test_site", "https://reqres.in/api/users/1")
                     .await;
             });
 
             // wait 60 seconds
-            println!("wait 60 seconds");
-            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
-            watcher.error = Some("error".to_string());
+            println!("wait ");
+            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            println!("wait ");
+            // *stop_signal = true;
+            // watcher.error = Some("error".to_string());
+            // r_store.set_error("error".to_string()).await;
+            println!("wait ");
+            let _ = thr.await;
+            println!("exit");
 
-            let all_services = store.get("test_site".to_string()).unwrap();
-            println!("{:?}", all_services)
+            // let all_services = r_store.lock().await.get("test_site".to_string()).unwrap();
+            // println!("{:?}", all_services)
+
+            // todo!();
         }
     }
 }

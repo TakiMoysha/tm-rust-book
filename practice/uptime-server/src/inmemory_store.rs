@@ -59,29 +59,39 @@ pub trait Repository: Send + Sync {
 
 impl Repository for InMemoryStore {
     fn all(&self) -> Result<HashMap<ServiceAlias, URL>, StoreError> {
-        Ok(self.services.lock().unwrap().clone())
+        let lock = match self.services.lock() {
+            Ok(lock) => lock,
+            _ => return Err(StoreError::LockError),
+        };
+
+        Ok(lock.clone())
     }
 
     fn get(&self, key: ServiceAlias) -> Result<URL, StoreError> {
-        self.services
-            .lock()
-            .unwrap()
-            .get(&key)
-            .cloned()
-            .ok_or(StoreError::NotFound)
+        let lock = match self.services.lock() {
+            Ok(lock) => lock,
+            _ => return Err(StoreError::LockError),
+        };
+
+        lock.get(&key).cloned().ok_or(StoreError::NotFound)
     }
 
     fn delete(&self, key: ServiceAlias) -> Result<String, StoreError> {
-        self.services.lock().unwrap().remove(&key);
+        let mut lock = match self.services.lock() {
+            Ok(lock) => lock,
+            _ => return Err(StoreError::LockError),
+        };
 
-        Ok(key)
+        lock.remove(&key).ok_or(StoreError::NotFound)
     }
 
     fn insert(&self, key: ServiceAlias, value: URL) -> Result<(), StoreError> {
-        self.services
-            .lock()
-            .unwrap()
-            .insert(key.clone(), value.clone());
+        let mut lock = match self.services.lock() {
+            Ok(lock) => lock,
+            _ => return Err(StoreError::LockError),
+        };
+
+        lock.insert(key.clone(), value.clone());
 
         Ok(())
     }
@@ -90,10 +100,12 @@ impl Repository for InMemoryStore {
         &self,
         key: ServiceAlias,
     ) -> Result<Vec<HealthPoint>, StoreError> {
-        let server_points = self
-            .health_points
-            .lock()
-            .unwrap()
+        let lock = match self.health_points.lock() {
+            Ok(lock) => lock,
+            _ => return Err(StoreError::LockError),
+        };
+
+        let server_points = lock
             .iter()
             .filter(|record| record.alias == key)
             .cloned()
@@ -109,7 +121,12 @@ impl Repository for InMemoryStore {
         status_code: reqwest::StatusCode,
         response_text: String,
     ) -> Result<(), StoreError> {
-        self.health_points.lock().unwrap().push(HealthPoint {
+        let mut lock = match self.health_points.lock() {
+            Ok(lock) => lock,
+            _ => return Err(StoreError::LockError),
+        };
+
+        lock.push(HealthPoint {
             alias: key,
             time_point,
             status_code,
