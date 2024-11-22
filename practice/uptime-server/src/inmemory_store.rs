@@ -72,8 +72,12 @@ impl Repository for InMemoryStore {
             Ok(lock) => lock,
             _ => return Err(StoreError::LockError),
         };
+        let _tmp = lock.get(&key).cloned();
 
-        lock.get(&key).cloned().ok_or(StoreError::NotFound)
+        let _ = *self.services.lock().unwrap();
+        println!("get: [{:?}]", 0);
+
+        _tmp.ok_or(StoreError::NotFound)
     }
 
     fn delete(&self, key: ServiceAlias) -> Result<String, StoreError> {

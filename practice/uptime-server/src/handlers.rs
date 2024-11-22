@@ -19,15 +19,16 @@ mod monitoring {
 
     use crate::inmemory_store::{InMemoryStore, Repository};
 
+    #[derive(Debug)]
     pub struct HealthWatcher {
-        error: Option<String>,
+        signal: Mutex<Option<String>>,
         store: Mutex<InMemoryStore>,
     }
 
     impl HealthWatcher {
-        pub fn new(store_p: InMemoryStore) -> HealthWatcher {
+        pub fn new(signal_p: Option<String>, store_p: InMemoryStore) -> HealthWatcher {
             HealthWatcher {
-                error: None,
+                signal: Mutex::new(signal_p),
                 store: Mutex::new(store_p),
             }
         }
@@ -35,51 +36,7 @@ mod monitoring {
         // // check url servie status,
         // // if website working - save to db working point
         // // if website not working - save to db not working point
-        // async fn check_site_health(&self, alias: &str, url: &str) {
-        //     let mut interval = interval(Duration::from_secs(5));
-        //
-        //     loop {
-        //         interval.tick().await;
-        //         let response = reqwest::get(url).await.unwrap();
-        //         let status_code = response.status();
-        //         let time_point = SystemTime::now();
-        //         let response_text = response.text().await.unwrap();
-        //
-        //         println!("save ...");
-        //         self.store
-        //             .lock()
-        //             .await
-        //             .save_health_point(alias.to_string(), time_point, status_code, response_text)
-        //             .unwrap();
-        //
-        //         // if *signal {
-        //         //     println!("error in watcher, break loop");
-        //         //     break;
-        //         // }
-        //         if self.error.is_some() {
-        //             println!("error in watcher, break loop");
-        //             break;
-        //         }
-        //     }
-        //     println!("End of loop");
-        // }
-        //
-        // async fn set_error(&mut self, msg: String) {
-        //     self.error = Some(msg);
-        // }
-        //
-    }
-
-    trait AtomicWatcher: Send + Sync {
-        async fn check_site_health(&self, alias: &str, url: &str);
-        async fn set_error(&mut self, msg: String);
-    }
-
-    impl AtomicWatcher for HealthWatcher {
-        // check url servie status,
-        // if website working - save to db working point
-        // if website not working - save to db not working point
-        async fn check_site_health(&self, alias: &str, url: &str) {
+        async fn check_site_health(&self, alias: &str, url: &str, signal: &Arc<Mutex<bool>>) {
             let mut interval = interval(Duration::from_secs(5));
 
             loop {
@@ -96,22 +53,61 @@ mod monitoring {
                     .save_health_point(alias.to_string(), time_point, status_code, response_text)
                     .unwrap();
 
-                // if *signal {
-                //     println!("error in watcher, break loop");
-                //     break;
-                // }
-                if self.error.is_some() {
+                if *signal.lock().await {
                     println!("error in watcher, break loop");
                     break;
                 }
+                // if self.signal.lock().await.is_some() {
+                //     println!("error in watcher, break loop");
+                //     break;
+                // }
             }
             println!("End of loop");
         }
-
-        async fn set_error(&mut self, msg: String) {
-            self.error = Some(msg);
-        }
     }
+
+    // trait AtomicWatcher: Send + Sync {
+    //     async fn check_site_health(&self, alias: &str, url: &str);
+    //     async fn set_error(&mut self, msg: String);
+    // }
+    //
+    // impl AtomicWatcher for HealthWatcher {
+    //     // check url servie status,
+    //     // if website working - save to db working point
+    //     // if website not working - save to db not working point
+    //     async fn check_site_health(&self, alias: &str, url: &str) {
+    //         let mut interval = interval(Duration::from_secs(5));
+    //
+    //         loop {
+    //             interval.tick().await;
+    //             let response = reqwest::get(url).await.unwrap();
+    //             let status_code = response.status();
+    //             let time_point = SystemTime::now();
+    //             let response_text = response.text().await.unwrap();
+    //
+    //             println!("error: {:?}, save... ", self.error);
+    //             self.store
+    //                 .lock()
+    //                 .await
+    //                 .save_health_point(alias.to_string(), time_point, status_code, response_text)
+    //                 .unwrap();
+    //
+    //             // if *signal {
+    //             //     println!("error in watcher, break loop");
+    //             //     break;
+    //             // }
+    //             if self.error.is_some() {
+    //                 println!("error in watcher, break loop");
+    //                 break;
+    //             }
+    //         }
+    //         println!("End of loop");
+    //     }
+    //
+    //     async fn set_error(&mut self, msg: String) {
+    //         self.error = Some(msg);
+    //     }
+    // }
 
     #[cfg(test)]
     mod tests {
@@ -132,11 +128,12 @@ mod monitoring {
 
             let thr = tokio::spawn(async move {
                 loop {
-                    if *for_thread_value.lock().await == 10 {
+                    let mut lock = for_thread_value.lock().await;
+                    if *lock == 10 {
                         break;
                     }
 
-                    *for_thread_value.lock().await += 3;
+                    *lock += 3;
                     time::sleep(tokio::time::Duration::from_secs(1)).await;
                 }
             });
@@ -152,38 +149,34 @@ mod monitoring {
             println!("{:?} = {:?}", for_control_value, *value_lock);
         }
 
-        #[ignore = "wip"]
         #[tokio::test]
-        async fn should_check_website() {
+        async fn should_check_website_and_save_data() {
             let store = InMemoryStore::new();
-            let mut watcher = Arc::new(HealthWatcher::new(store));
-            let r_store = Rc::new(&watcher);
-            // let watcher_p = Cell::new(&watcher);
-            let stop_signal = Arc::new(&mut false);
-            let _watcher = Arc::clone(&watcher);
+
+            let row_watcher = HealthWatcher::new(None, store);
+
+            let p_signal = Arc::new(Mutex::new(false));
+            let p2_signal = Arc::clone(&p_signal);
+            let p_watcher = Arc::new(Mutex::new(row_watcher));
+            let m_watcher = Arc::clone(&p_watcher);
 
             let thr = tokio::spawn(async move {
-                // let _watcher = Arc::clone(&watcher);
-                (*watcher)
-                    .check_site_health("test_site", "https://reqres.in/api/users/1")
+                (*m_watcher.lock().await)
+                    .check_site_health("test_site", "https://reqres.in/api/users/1", &p_signal)
                     .await;
             });
 
-            // wait 60 seconds
-            println!("wait ");
-            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-            println!("wait ");
-            // *stop_signal = true;
-            // watcher.error = Some("error".to_string());
-            // r_store.set_error("error".to_string()).await;
-            println!("wait ");
+            println!("wait");
+            time::sleep(tokio::time::Duration::from_secs(10)).await;
+            println!("mod");
+
+            *p2_signal.lock().await = true;
+            println!("stoping...");
             let _ = thr.await;
-            println!("exit");
 
-            // let all_services = r_store.lock().await.get("test_site".to_string()).unwrap();
-            // println!("{:?}", all_services)
-
-            // todo!();
+            let points = (*p_watcher.lock().await.store.lock().await)
+                .get_health_points_by_alias("test_site".to_string());
+            println!("{:?}", points);
         }
     }
 }
