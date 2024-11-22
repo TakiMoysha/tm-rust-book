@@ -59,25 +59,16 @@ pub trait Repository: Send + Sync {
 
 impl Repository for InMemoryStore {
     fn all(&self) -> Result<HashMap<ServiceAlias, URL>, StoreError> {
-        let lock = match self.services.lock() {
-            Ok(lock) => lock,
-            _ => return Err(StoreError::LockError),
-        };
-
-        Ok(lock.clone())
+        Ok(self.services.lock().unwrap().clone())
     }
 
     fn get(&self, key: ServiceAlias) -> Result<URL, StoreError> {
-        let lock = match self.services.lock() {
-            Ok(lock) => lock,
-            _ => return Err(StoreError::LockError),
-        };
-        let _tmp = lock.get(&key).cloned();
-
-        let _ = *self.services.lock().unwrap();
-        println!("get: [{:?}]", 0);
-
-        _tmp.ok_or(StoreError::NotFound)
+        self.services
+            .lock()
+            .unwrap()
+            .get(&key)
+            .cloned()
+            .ok_or(StoreError::NotFound)
     }
 
     fn delete(&self, key: ServiceAlias) -> Result<String, StoreError> {
@@ -154,9 +145,13 @@ mod tests {
 
         let store = InMemoryStore::new();
         store.insert(s1_alias.clone(), s1_url.clone()).unwrap();
+        println!("inserted");
         store.insert(s2_alias.clone(), s2_url.clone()).unwrap();
+        println!("inserted");
 
         assert_eq!(s1_url, store.get(s1_alias).unwrap());
+        println!("got");
         assert_eq!(s2_url, store.get(s2_alias).unwrap());
+        println!("got");
     }
 }
