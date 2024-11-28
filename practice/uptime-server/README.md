@@ -5,7 +5,7 @@
 * [ ] Filter time points by time range;
 * [ ] FillDataGaps for timeframe without data;
 * [ ] Removed website from watching list;
-* [ ]
+* [ ] Implement background tasks for watching websites;
 
 ## Problems
 
@@ -18,6 +18,8 @@
 **Testing infinite loop**
 
 **Shared Object** - pointers, arc, mutex, rc, cell
+
+**Background Tasks** - 
 
 # References
 
