@@ -1,8 +1,6 @@
 use async_once_cell::OnceCell as AsyncOnceCell;
 use chrono::{DateTime, Utc};
-use std::cell::OnceCell;
-use std::future::Future;
-use std::rc::Rc;
+use std::{cell::OnceCell, future::Future, rc::Rc};
 
 use crate::configuration_manager::ConfigurationManager;
 use crate::data_collector::{ApiDataCollector, DataCollector, SqlDataCollector};
@@ -12,7 +10,6 @@ use crate::monitorint_system::MonitoringSystem;
 use crate::notification_message_builder::{
     DefaultNotificationMessageBuilder, NotificationMessageBuilder,
 };
-use crate::repository::{Repository, Sqlite};
 use crate::types::{AnotherSpecificType, SpecificType, TraitBasedType};
 
 pub struct DependencyContainer {

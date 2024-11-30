@@ -1,7 +1,6 @@
 use std::sync::Mutex;
 
-use crate::domain::entities::{ Pokemon, PokemonName, PokemonNumber, PokemonTypes };
-
+use crate::domain::entities::{Pokemon, PokemonName, PokemonNumber, PokemonTypes};
 
 pub enum Insert {
     Ok(PokemonNumber),
@@ -33,7 +32,6 @@ pub enum FetchOneError {
     Unknown,
 }
 
-
 impl InMemoryRepository {
     pub fn new() -> Self {
         let pokemons: Mutex<Vec<Pokemon>> = Mutex::new(vec![]);
@@ -63,7 +61,7 @@ pub trait Repository: Send + Sync {
         &self,
         number: PokemonNumber,
         name: PokemonName,
-        types: PokemonTypes
+        types: PokemonTypes,
     ) -> Result<Pokemon, InsertError>;
 }
 
@@ -122,7 +120,7 @@ impl Repository for InMemoryRepository {
         &self,
         number: PokemonNumber,
         name: PokemonName,
-        types: PokemonTypes
+        types: PokemonTypes,
     ) -> Result<Pokemon, InsertError> {
         if self.error {
             return Err(InsertError::Unknown);
