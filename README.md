@@ -1,6 +1,8 @@
 
 ## TODO
 1. tokio shared state
+2. write more abount zero-copy approach
+3. write about copy-on-write approach
 
 ## Rust-Protocols
 
