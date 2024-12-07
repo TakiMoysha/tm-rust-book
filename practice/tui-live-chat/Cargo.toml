@@ -1,0 +1,17 @@
+[package]
+name = "tui-live-chat"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix = "0.13.5"
+actix-web = "4.9.0"
+actix-ws = "0.3.0"
+clap = "4.5.23"
+futures-util = "0.3.31"
+log = "0.4.22"
+ratatui = "0.29.0"
+rocket = "0.5.1"
+rocket_ws = "0.1.1"
+serde = { version = "1.0.215", features = ["derive"] }
+tokio = { version = "1.42.0", features = ["full"] }
