@@ -2427,7 +2427,6 @@ dependencies = [
  "actix-ws",
  "clap",
  "futures-util",
- "log",
  "ratatui",
  "rocket",
  "rocket_ws",
