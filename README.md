@@ -5,7 +5,8 @@
 3. write about copy-on-write approach
 4. try ICE protocol
 5. pingore
-6. 
+6. advent_of_code, 5 day - implement rule tree structure
+7. 
 
 ## Rust-Protocols
 
