@@ -1,30 +1,31 @@
 mod terminal;
+mod view;
 
 use std::env;
-use std::io::{self, stdout, Error};
+use std::io::Error;
 
-use crossterm::cursor::{self};
-use crossterm::event::read;
+use crossterm::event::{read, KeyEventKind};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use crossterm::terminal::disable_raw_mode;
-use crossterm::terminal::enable_raw_mode;
-use crossterm::terminal::{Clear, ClearType};
-use crossterm::{execute, ExecutableCommand};
 
 use terminal::{Position, Size, Terminal};
+use view::View;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Copy, Clone, Default)]
+struct Location {
+    x: usize,
+    y: usize,
+}
+
+#[derive(Default)]
 pub struct Editor {
     should_quit: bool,
+    location: Location,
 }
 
 impl Editor {
-    pub const fn default() -> Self {
-        Editor { should_quit: false }
-    }
-
     pub fn run(&mut self) {
         Terminal::init().unwrap();
         let res = self.repl();
@@ -44,76 +45,83 @@ impl Editor {
         Ok(())
     }
 
-    fn evaluate_event(&mut self, event: &Event) {
+    fn move_point(&mut self, key_code: KeyCode) -> Result<(), Error> {
+        let Location { mut x, mut y } = self.location;
+        let Size { height, width } = Terminal::size()?;
+        match key_code {
+            KeyCode::Up => {
+                y = y.saturating_sub(1);
+            }
+            KeyCode::Down => {
+                y = y.saturating_add(1);
+            }
+            KeyCode::Left => {
+                x = x.saturating_sub(1);
+            }
+            KeyCode::Right => {
+                x = x.saturating_add(1);
+            }
+            KeyCode::PageUp => {
+                y = 0;
+            }
+            KeyCode::PageDown => {
+                y = height.saturating_sub(1);
+            }
+            KeyCode::Home => {
+                x = 0;
+            }
+            KeyCode::End => {
+                x = width.saturating_sub(1);
+            }
+            _ => {}
+        }
+        self.location = Location { x, y };
+        Ok(())
+    }
+
+    fn evaluate_event(&mut self, event: &Event) -> Result<(), Error> {
         if let Event::Key(KeyEvent {
-            code, modifiers, ..
+            code,
+            modifiers,
+            kind: KeyEventKind::Press,
+            ..
         }) = event
         {
             match code {
                 KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
-                    self.should_quit = true
+                    self.should_quit = true;
                 }
-                KeyCode::Char('d') if *modifiers == KeyModifiers::CONTROL => {
-                    self.demo_draw();
+                KeyCode::Up
+                | KeyCode::Down
+                | KeyCode::Left
+                | KeyCode::Right
+                | KeyCode::PageUp
+                | KeyCode::PageDown
+                | KeyCode::Home
+                | KeyCode::End => {
+                    self.move_point(*code)?;
                 }
-                _ => println!("{:?} \r", *code),
+                _ => {}
             }
         }
+        Ok(())
     }
 
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
-        Terminal::hide_cursor()?;
+        Terminal::hide_caret()?;
+        Terminal::move_caret_to(Position::default())?;
         if self.should_quit {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye!\r\n")?;
         } else {
-            self.demo_draw()?;
-            Terminal::move_cursor_to(Position { x: 0, y: 0 })?;
+            View::render()?;
+            Terminal::move_caret_to(Position {
+                x: self.location.x,
+                y: self.location.y,
+            })?;
         }
-        Terminal::show_cursor()?;
+        Terminal::show_caret()?;
         Terminal::execute()?;
-        Ok(())
-    }
-
-    fn demo_draw(&self) -> Result<(), Error> {
-        let Size { height, width } = Terminal::size()?;
-        Terminal::print(format!("{}", "=".repeat(width as usize)).as_str());
-        Ok(())
-    }
-
-    fn draw_welcome_msg() -> Result<(), Error> {
-        let mut welcome_msg = format!("{NAME} -- v{VERSION}");
-        let width = Terminal::size()?.width;
-        let len = welcome_msg.len();
-
-        let padding = width.saturating_sub(len as u16) / 2;
-
-        let spaces = " ".repeat(padding.saturating_sub(1) as usize);
-        welcome_msg = format!("~{spaces}{welcome_msg}");
-        welcome_msg.truncate(width as usize);
-        Terminal::print(welcome_msg.as_str())?;
-        Ok(())
-    }
-
-    fn draw_empty_row() -> Result<(), Error> {
-        Terminal::print("~")?;
-        Ok(())
-    }
-
-    fn draw_rows() -> Result<(), Error> {
-        let Size { height, .. } = Terminal::size()?;
-        for current_row in 0..height {
-            Terminal::clear_line()?;
-            Terminal::print(format!("DEB:{}", current_row).as_str())?;
-            if current_row == height / 3 {
-                Self::draw_welcome_msg()?;
-            } else {
-                Self::draw_empty_row()?;
-            }
-            if current_row.saturating_add(1) < height {
-                Terminal::print("\r\n")?;
-            }
-        }
         Ok(())
     }
 }
