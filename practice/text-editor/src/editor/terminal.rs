@@ -8,16 +8,16 @@ use crossterm::{
     Command,
 };
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Size {
     pub height: usize,
     pub width: usize,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Position {
-    pub x: usize,
-    pub y: usize,
+    pub col: usize,
+    pub row: usize,
 }
 
 pub struct Terminal;
@@ -52,7 +52,7 @@ impl Terminal {
     }
 
     pub fn move_caret_to(pos: Position) -> Result<(), Error> {
-        Self::queue_command(MoveTo(pos.x as u16, pos.y as u16))?;
+        Self::queue_command(MoveTo(pos.col as u16, pos.row as u16))?;
         Ok(())
     }
 

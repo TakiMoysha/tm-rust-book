@@ -1,6 +1,7 @@
 use std::default;
 use std::io::Error;
 use std::path;
+use std::string::ToString;
 
 #[derive(Debug, Default)]
 pub struct Buffer {
@@ -12,9 +13,9 @@ impl Buffer {
     pub(crate) fn load(file_name: &str) -> Result<Buffer, Error> {
         let path = path::Path::new(file_name);
         let data = std::fs::read_to_string(path)
-            .unwrap()
+            .expect("Can't read the file, check the path")
             .lines()
-            .map(|l| l.to_string())
+            .map(ToString::to_string)
             .collect::<Vec<String>>();
         Ok(Buffer {
             title: file_name.to_string(),
