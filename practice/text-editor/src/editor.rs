@@ -1,3 +1,4 @@
+mod buffer;
 mod terminal;
 mod view;
 
@@ -23,16 +24,24 @@ struct Location {
 pub struct Editor {
     should_quit: bool,
     location: Location,
+    view: View,
 }
 
 impl Editor {
     pub fn run(&mut self) {
         Terminal::init().unwrap();
+        self.handle_args();
         let res = self.repl();
         Terminal::terminate().unwrap();
         res.unwrap();
     }
 
+    fn handle_args(&mut self) {
+        let args: Vec<String> = env::args().collect();
+        if let Some(file_name) = args.get(1) {
+            self.view.load(file_name);
+        }
+    }
     fn repl(&mut self) -> Result<(), Error> {
         loop {
             let event = read()?;
@@ -114,7 +123,7 @@ impl Editor {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye!\r\n")?;
         } else {
-            View::render()?;
+            self.view.render()?;
             Terminal::move_caret_to(Position {
                 x: self.location.x,
                 y: self.location.y,

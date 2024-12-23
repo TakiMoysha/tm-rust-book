@@ -1,33 +1,64 @@
-use super::terminal::{Size, Terminal};
+use super::{
+    buffer,
+    terminal::{Size, Terminal},
+};
 use std::io::Error;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub struct View;
+#[derive(Debug)]
+pub enum ViewError {
+    Undefined(String),
+}
+
+impl std::fmt::Display for ViewError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct View {
+    buffer: buffer::Buffer,
+}
 
 impl View {
-    pub fn render() -> Result<(), Error> {
+    pub fn new(buffer: buffer::Buffer) -> Self {
+        Self { buffer }
+    }
+
+    pub fn render(&self) -> Result<(), Error> {
+        if self.buffer.is_empty() {
+            Self::draw_welcome()?;
+        } else {
+            self.draw_buffer()?;
+        }
+        Ok(())
+    }
+
+    pub fn load(&mut self, file_name: &str) {
+        if let Ok(buffer) = buffer::Buffer::load(file_name) {
+            self.buffer = buffer;
+        }
+    }
+
+    fn draw_buffer(&self) -> Result<(), Error> {
         let Size { height, .. } = Terminal::size()?;
-        Terminal::clear_line()?;
-        for current_row in 1..height {
+
+        for current_row in 0..height {
             Terminal::clear_line()?;
-            // we allow this since we don't care if our welcome message is put _exactly_ in the middle.
-            // it's allowed to be a bit up or down
-            #[allow(clippy::integer_division)]
-            if current_row == height / 3 {
-                Self::draw_welcome_msg()?;
+            if let Some(line) = self.buffer.data.get(current_row) {
+                Terminal::print(line)?;
+                Terminal::print("\r\n")?;
             } else {
                 Self::draw_empty_row()?;
-            }
-            if current_row.saturating_add(1) < height {
-                Terminal::print("\r\n")?;
             }
         }
         Ok(())
     }
 
-    fn draw_welcome_msg() -> Result<(), Error> {
+    fn draw_welcome() -> Result<(), Error> {
         let mut welcome_msg = format!("{NAME} -- v{VERSION}");
         let width = Terminal::size()?.width;
         let len = welcome_msg.len();
@@ -52,7 +83,7 @@ impl View {
             Terminal::clear_line()?;
             Terminal::print("DEB:{current_row}")?;
             if current_row == height / 3 {
-                Self::draw_welcome_msg()?;
+                Self::draw_welcome()?;
             } else {
                 Self::draw_empty_row()?;
             }
