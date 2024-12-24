@@ -2,8 +2,6 @@
 
 mod editor;
 
-mod panic_test;
-
 fn main() {
     editor::Editor::default().run();
 }
