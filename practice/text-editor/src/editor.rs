@@ -24,6 +24,12 @@ pub struct Editor {
     view: View,
 }
 
+impl Drop for Editor {
+    fn drop(&mut self) {
+        Terminal::terminate().unwrap_or_else(|err| println!("Error: {}", err));
+    }
+}
+
 impl Editor {
     pub fn run(&mut self) {
         Terminal::init().unwrap();
