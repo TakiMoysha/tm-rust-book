@@ -1,0 +1,13 @@
+[package]
+name = "primitives-mapreduce"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+divan = "0.1.17"
+tracing = "0.1.41"
+
+[[bench]]
+name = "mapreduce"
+path = "benches/mapreduce.rs"
+harness = false
