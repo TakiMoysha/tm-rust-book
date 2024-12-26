@@ -2,7 +2,7 @@ use std::io::{stdout, Error, Write};
 
 use crossterm::{
     cursor::MoveTo,
-    execute, queue,
+    queue,
     style::Print,
     terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType},
     Command,
@@ -95,7 +95,7 @@ impl Terminal {
         Ok(())
     }
 
-    pub(crate) fn print_line(at: usize, text: &str) -> Result<(), Error> {
+    pub fn print_line(at: usize, text: &str) -> Result<(), Error> {
         Self::move_caret_to(Position { col: 0, row: at })?;
         Self::clear_line()?;
         Self::print(text)?;

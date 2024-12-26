@@ -1,4 +1,3 @@
-use std::default;
 use std::io::Error;
 use std::path;
 use std::string::ToString;
@@ -17,10 +16,8 @@ impl Buffer {
             .lines()
             .map(ToString::to_string)
             .collect::<Vec<String>>();
-        Ok(Buffer {
-            title: file_name.to_string(),
-            data,
-        })
+        let title = path.file_name().unwrap().to_string_lossy().to_string();
+        Ok(Buffer { title, data })
     }
 
     pub fn is_empty(&self) -> bool {

@@ -55,7 +55,7 @@ impl Editor {
 
     pub fn run(&mut self) {
         loop {
-            self.refresh_screen().unwrap();
+            self.refresh_screen();
             if self.should_quit {
                 break;
             }
@@ -139,21 +139,14 @@ impl Editor {
         Ok(())
     }
 
-    fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
-        Terminal::hide_caret()?;
-        Terminal::move_caret_to(Position::default())?;
-        if self.should_quit {
-            Terminal::clear_screen()?;
-            Terminal::print("Goodbye!\r\n")?;
-        } else {
-            self.view.render();
-            Terminal::move_caret_to(Position {
-                col: self.location.x,
-                row: self.location.y,
-            })?;
-        }
-        Terminal::show_caret()?;
-        Terminal::execute()?;
-        Ok(())
+    fn refresh_screen(&mut self) {
+        let _ = Terminal::hide_caret();
+        self.view.render();
+        let _ = Terminal::move_caret_to(Position {
+            col: self.location.x,
+            row: self.location.y,
+        });
+        let _ = Terminal::show_caret();
+        let _ = Terminal::execute();
     }
 }
