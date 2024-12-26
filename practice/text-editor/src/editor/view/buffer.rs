@@ -2,10 +2,12 @@ use std::io::Error;
 use std::path;
 use std::string::ToString;
 
+use super::line::Line;
+
 #[derive(Debug, Default)]
 pub struct Buffer {
     title: String,
-    pub data: Vec<String>,
+    pub data: Vec<Line>,
 }
 
 impl Buffer {
@@ -14,8 +16,8 @@ impl Buffer {
         let data = std::fs::read_to_string(path)
             .expect("Can't read the file, check the path")
             .lines()
-            .map(ToString::to_string)
-            .collect::<Vec<String>>();
+            .map(Line::from)
+            .collect::<Vec<Line>>();
         let title = path.file_name().unwrap().to_string_lossy().to_string();
         Ok(Buffer { title, data })
     }
@@ -32,6 +34,6 @@ mod buffer_tests {
     #[test]
     fn test_default_buffer() {
         let buffer = Buffer::default();
-        assert_eq!(buffer.data, Vec::<String>::default());
+        assert_eq!(buffer.data, Vec::<Line>::default());
     }
 }

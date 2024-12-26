@@ -31,6 +31,25 @@ _Creation_ - the process of creating a new instance of a struct. We can using `D
 _Usage_ - rust language is built around the concept of lifetime, this neccessary for _Memory Safety_. This meaning that the references we work with are always valid.
 _Destruction_ - the process of removing things from memory. However, we somethimes have the need to do some cleanup if a `struct` of ours goes out of memory - for instance, disabling raw mode again.
 
+When struct implements the `Copy` trait, the closure will have a copy available to work with.
+
+```rust
+fn main() {
+  let msg = String::from("Hello");
+  let greet = move |name| println!("{} {}", msg, name);
+  greet("Zoki!");
+}
+```
+
+For panic hook we using `Box`, why? Because we want our closure to survive the entire program execution process. We achieve this by putting it inside a `Box`. This boxes the closure in memory, and we pass a pointer to this boxed closure to `set_hook`.
+
+```rust
+let current_hook = std::panic::take_hook();
+std::panic::set_hook(Box::new(move |info| {
+  current_hook(info);
+}))
+```
+
 ## References
 
 - [Hecto: Building a Text Editor / flenker.blog](https://flenker.blog/hecto/)
