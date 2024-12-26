@@ -1,30 +1,24 @@
 use std::thread;
 
-fn summing(c: &char) -> u32 {
-    c.to_digit(10).expect("should be a digit")
+fn summing_line(line: &str) -> u32 {
+    line.chars()
+        .map(|c| c.to_digit(10).expect("should be a digit"))
+        .sum()
 }
 
+// spawn a thread for each line
 pub fn parallel_sum(input: &'static str) -> u32 {
     let mut children = vec![];
 
-    for (i, data_l) in input.lines().enumerate() {
-        // println!("data segment {} is \"{}\"", i, data_l);
-
-        children.push(thread::spawn(move || -> u32 {
-            let result = data_l.chars().map(|c| summing(&c)).sum();
-            // println!("processed segment {}, result={}", i, result);
-            result
-        }))
-    }
+    input
+        .lines()
+        .for_each(|data_l| children.push(thread::spawn(move || -> u32 { summing_line(data_l) })));
 
     children.into_iter().map(|c| c.join().unwrap()).sum::<u32>()
 }
 
 pub fn single_thread_sum(input: &str) -> u32 {
-    input
-        .lines()
-        .map(|l| l.chars().map(|c| summing(&c)).sum::<u32>())
-        .sum()
+    input.lines().map(summing_line).sum()
 }
 
 #[cfg(test)]
