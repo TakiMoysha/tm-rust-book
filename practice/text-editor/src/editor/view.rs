@@ -23,7 +23,7 @@ impl std::fmt::Display for ViewError {
 pub struct View {
     buffer: Buffer,
     size: Size,
-    is_redraw: bool,
+    should_redraw: bool,
 }
 
 impl View {
@@ -36,24 +36,17 @@ impl View {
 
     pub(crate) fn resize(&mut self, to: Size) {
         self.size = to;
-        self.is_redraw = true;
+        self.should_redraw = true;
     }
 
-    fn render_line(at: usize, text: &str) -> Result<(), Error> {
-        Terminal::move_caret_to(Position { col: 0, row: at })?;
-        Terminal::clear_line()?;
-        Terminal::print(text)?;
-        Ok(())
-    }
-
-    pub fn render(&mut self) -> Result<(), Error> {
-        if !self.is_redraw {
-            return Ok(());
+    pub fn render(&mut self) {
+        if !self.should_redraw {
+            return;
         }
 
-        let Size { height, width } = Terminal::size()?;
+        let Size { height, width } = self.size;
         if height == 0 || width == 0 {
-            return Ok(());
+            return;
         }
 
         let vertical_center = height / 3;
@@ -65,21 +58,25 @@ impl View {
                 } else {
                     line
                 };
-                Self::render_line(current_row, truncated_line)?;
+                Self::draw_line(current_row, truncated_line);
             } else if current_row == vertical_center && self.buffer.is_empty() {
-                Self::render_line(current_row, &Self::build_welcome(width))?;
+                Self::draw_line(current_row, &Self::build_welcome(width));
             } else {
-                Self::render_line(current_row, "~")?;
+                Self::draw_line(current_row, "~");
             }
         }
-        self.is_redraw = false;
-        Ok(())
+        self.should_redraw = false;
     }
 
     pub fn load(&mut self, file_name: &str) {
         if let Ok(buffer) = buffer::Buffer::load(file_name) {
             self.buffer = buffer;
         };
+    }
+
+    fn draw_line(at: usize, text: &str) {
+        let res = Terminal::print_line(at, text);
+        debug_assert!(res.is_ok(), "Failed to render line");
     }
 
     fn draw_welcome() -> Result<(), Error> {
@@ -118,9 +115,5 @@ impl View {
             }
         }
         Ok(())
-    }
-
-    fn draw_empty_row() -> Result<(), Error> {
-        todo!()
     }
 }

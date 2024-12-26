@@ -24,6 +24,8 @@ pub struct Terminal;
 
 impl Terminal {
     pub fn terminate() -> Result<(), Error> {
+        Self::leave_alternative_screen()?;
+        Self::show_caret()?;
         Self::execute()?;
         disable_raw_mode()?;
         Ok(())
@@ -31,8 +33,19 @@ impl Terminal {
 
     pub fn init() -> Result<(), Error> {
         enable_raw_mode()?;
+        Self::enter_alternative_screen()?;
         Self::clear_screen()?;
         Self::execute()?;
+        Ok(())
+    }
+
+    pub fn enter_alternative_screen() -> Result<(), Error> {
+        Self::queue_command(crossterm::terminal::EnterAlternateScreen)?;
+        Ok(())
+    }
+
+    pub fn leave_alternative_screen() -> Result<(), Error> {
+        Self::queue_command(crossterm::terminal::LeaveAlternateScreen)?;
         Ok(())
     }
 
@@ -68,10 +81,8 @@ impl Terminal {
 
     pub fn size() -> Result<Size, std::io::Error> {
         let (width, height) = size()?;
-        Ok(Size {
-            height: height as usize,
-            width: width as usize,
-        })
+        let (width, height) = (width as usize, height as usize);
+        Ok(Size { height, width })
     }
 
     pub fn execute() -> Result<(), Error> {
@@ -81,6 +92,13 @@ impl Terminal {
 
     fn queue_command<T: Command>(command: T) -> Result<(), Error> {
         queue!(stdout(), command)?;
+        Ok(())
+    }
+
+    pub(crate) fn print_line(at: usize, text: &str) -> Result<(), Error> {
+        Self::move_caret_to(Position { col: 0, row: at })?;
+        Self::clear_line()?;
+        Self::print(text)?;
         Ok(())
     }
 }
