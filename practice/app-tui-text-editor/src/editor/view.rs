@@ -93,7 +93,7 @@ impl View {
             if let Some(line) = self.buffer.data.get(current_row.saturating_add(top)) {
                 let left = self.scroll_offset.x;
                 let right = self.scroll_offset.x.saturating_add(width);
-                Self::draw_line(current_row, &line.get(left..right));
+                Self::draw_line(current_row, &line.get_visible_graphemes(left..right));
             } else if current_row == vertical_center && self.buffer.is_empty() {
                 Self::draw_line(current_row, &Self::build_welcome(width));
             } else {
