@@ -22,8 +22,20 @@ impl Buffer {
         Ok(Buffer { title, data })
     }
 
+    pub fn from_str(s: &str) -> Buffer {
+        let data = s.lines().map(Line::from).collect::<Vec<Line>>();
+        Buffer {
+            title: String::from("default"),
+            data,
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
+    }
+
+    pub fn height(&self) -> usize {
+        self.data.len()
     }
 }
 
@@ -35,5 +47,12 @@ mod buffer_tests {
     fn test_default_buffer() {
         let buffer = Buffer::default();
         assert_eq!(buffer.data, Vec::<Line>::default());
+    }
+
+    #[test]
+    fn test_height_buffer() {
+        let test_lines: &str = "a;lskdhga\nsa;ldkjf;aslkd";
+        let buffer = Buffer::from_str(test_lines);
+        assert_eq!(buffer.height(), 2);
     }
 }

@@ -55,6 +55,7 @@ impl Editor {
             match read() {
                 Ok(event) => self.evaluate_event(event).unwrap(),
                 Err(err) => {
+                    #[cfg(debug_assertions)]
                     panic!("Unexpected Error: {}", err);
                 }
             };
@@ -78,7 +79,10 @@ impl Editor {
                     }
                 }
                 Err(err) => {
-                    panic!("Could not handle command: {err}")
+                    #[cfg(debug_assertions)]
+                    {
+                        panic!("Could not handle command: {err}")
+                    }
                 }
             }
         }
