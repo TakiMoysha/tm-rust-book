@@ -13,6 +13,8 @@ use editor_command::EditorCommand;
 use terminal::Terminal;
 use view::View;
 
+use crate::debug_panic;
+
 pub struct Editor {
     should_quit: bool,
     view: View,
@@ -54,10 +56,7 @@ impl Editor {
             }
             match read() {
                 Ok(event) => self.evaluate_event(event).unwrap(),
-                Err(err) => {
-                    #[cfg(debug_assertions)]
-                    panic!("Unexpected Error: {}", err);
-                }
+                Err(err) => debug_panic!(format!("Could not read from stdin: {err}")),
             };
         }
     }
@@ -78,12 +77,7 @@ impl Editor {
                         self.view.handle_command(command);
                     }
                 }
-                Err(err) => {
-                    #[cfg(debug_assertions)]
-                    {
-                        panic!("Could not handle command: {err}")
-                    }
-                }
+                Err(err) => debug_panic!(format!("Could not handle command: {err}")),
             }
         }
         Ok(())
@@ -96,4 +90,9 @@ impl Editor {
         let _ = Terminal::show_caret();
         let _ = Terminal::execute();
     }
+}
+
+#[cfg(test)]
+mod editor_tests {
+    use super::*;
 }

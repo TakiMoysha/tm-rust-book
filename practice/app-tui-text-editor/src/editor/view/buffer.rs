@@ -11,7 +11,7 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub(crate) fn load(file_name: &str) -> Result<Buffer, Error> {
+    pub fn load(file_name: &str) -> Result<Buffer, Error> {
         let path = path::Path::new(file_name);
         let data = std::fs::read_to_string(path)
             .expect("Can't read the file, check the path")
