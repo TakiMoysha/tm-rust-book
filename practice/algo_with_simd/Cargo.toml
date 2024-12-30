@@ -1,9 +1,0 @@
-[package]
-name = "algo_with_simd"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-
-[toolchain]
-channel = 'nightly-2024-08-26'
