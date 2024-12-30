@@ -38,7 +38,7 @@ impl UIComponent for StatusBar {
         let modified_indicator = self.current_status.modified_indicator_to_string();
 
         let beginning = format!(
-            "{} - {line_count} {modified_indicator}",
+            "{} - {line_count}{modified_indicator}",
             self.current_status.file_name
         );
 
