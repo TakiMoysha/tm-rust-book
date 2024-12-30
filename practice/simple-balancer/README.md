@@ -15,3 +15,4 @@ Automation switching to higher priority addresses if they become available after
 ## References
 
 1. [Балансировщик нагрузки с приоритизацией / habr.com](https://habr.com/ru/companies/vk/articles/858290/)
+2. []()
