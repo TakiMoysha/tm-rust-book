@@ -1,3 +1,9 @@
+## Resources
+
+* Rust Book
+* Idiomatic Rust
+* https://rust-unofficial.github.io/too-many-lists/
+
 ## TODO
 
 1. tokio shared state

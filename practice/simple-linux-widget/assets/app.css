@@ -1,0 +1,27 @@
+:root {
+  --bg-color: #888888;
+  --border-color: #ffffff;
+}
+
+window {
+  background-color: var(--bg-color);
+  opacity: 0.1;
+  font-family: "monospace";
+  font-size: large;
+}
+
+.container {
+  padding: 10px;
+  border: solid 1px var(--border-color);
+}
+
+.frame {
+  border: none;
+  padding-bottom: 0.25em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+}
+
+.innerbox {
+  padding-bottom: 0.25em;
+}
