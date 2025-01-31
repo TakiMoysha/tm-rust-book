@@ -45,9 +45,8 @@ pub mod ui {
         use gtk4::{gdk::Display, CssProvider};
 
         pub fn load_css(config: &crate::config::Config) {
-            // Load the CSS file and add it to the provider
-            let provider = gtk4::CssProvider::new();
-            provider.load_from_path(current_dir().join("assets/app.css"));
+            let provider = CssProvider::new();
+            provider.load_from_data(include_str!("../resources/app.css"));
 
             gtk4::style_context_add_provider_for_display(
                 &Display::default().expect("Could not connect to a display."),
