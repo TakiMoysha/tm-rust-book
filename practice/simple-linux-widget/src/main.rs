@@ -41,7 +41,6 @@ pub mod ui {
     use gtk4::prelude::*;
 
     pub mod css {
-        use glib::current_dir;
         use gtk4::{gdk::Display, CssProvider};
 
         pub fn load_css(config: &crate::config::Config) {
