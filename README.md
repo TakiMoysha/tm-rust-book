@@ -13,6 +13,8 @@
 5. pingore
 6. advent_of_code, 5 day - implement rule tree structure
 7. simple-ringboard
+8. streaming:
+  https://xd009642.github.io/2025/01/20/streaming-audio-APIs-the-axum-server.html
 
 ## Rust-Protocols
 
