@@ -1,5 +1,25 @@
+# Iterators
 
 `Iterator` - the stateful component of iteration
 `IntoIterator` - represents the capability for a type to be iterated over
+`FusedIterator` - indicates that the iterator always returns `None` when exhausted
 
-https://blog.yoshuawuyts.com/a-survey-of-every-iterator-variant/
+**Base Iterator**
+Represents the state of iteration. Whiel not strictly necessery: the associated `IntoIterator::Item` type exists for convenience. Using the trait can directlry specify the `Item` using `impl IntoIterator<Item = Foo>`.
+
+**Bounded Iterator**
+The base iterator, potentially infinite, with provide a undifined behavior. Bounded Iterator have a `size_hint` method that returns the number of remaining elements. Implemented throught the `std::iter::ExactSizeIterator` (stable) and `std::iter::TrustedLen` (unstable).
+
+**Fused Iterator**
+Classic - return None at the "end" of the iterator. The specification indicates that `Next` can be caused after that. `FusedIterator` always return `None` when it was return first `None` value.
+
+**Thread-Safe Iterator**
+Thread-Safe iterator are obtainned by composing a `Sync` and `Send` auto-traits.
+
+**Dyn-Compatible Iterator**
+Dync-compatibility is an inherent part of the trait and is governed by `Sized` bounds. `Iterator` and `IntoIterator` traits are inherently dyn-compatible, thet means they can be used to create trait objects using the `dyn` keyword.
+
+## References
+
+- [A Survey of Every Iterator Variant / blog.yoshuawuyts.com](https://blog.yoshuawuyts.com/a-survey-of-every-iterator-variant/)
+- [Keyword dyn / doc.rust-lang.org](https://doc.rust-lang.org/std/keyword.dyn.html)
