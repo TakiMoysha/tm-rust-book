@@ -1,10 +1,18 @@
 ## Resources
 
-* Rust Book
-* Idiomatic Rust
-* https://rust-unofficial.github.io/too-many-lists/
+- Rust Book
+- Idiomatic Rust
+- https://rust-unofficial.github.io/too-many-lists/
 
-## TODO
+## Structures
+
+- *bevy* - bevy based projects
+- *get_started* - rust book notes
+- *practice* - abyss of rust
+- *primitives* - review atomic crates or rust concepts
+- *samples* - projects immitating something
+
+## Roadmap
 
 1. tokio shared state
 2. write more abount zero-copy approach
@@ -14,7 +22,7 @@
 6. advent_of_code, 5 day - implement rule tree structure
 7. simple-ringboard
 8. streaming:
-  https://xd009642.github.io/2025/01/20/streaming-audio-APIs-the-axum-server.html
+   https://xd009642.github.io/2025/01/20/streaming-audio-APIs-the-axum-server.html
 
 ## Rust-Protocols
 
