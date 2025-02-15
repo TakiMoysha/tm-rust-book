@@ -25,6 +25,10 @@ Allows you to be at the end and at the start.
 **Seeking Iterator**
 Allows you to control the `Read` trait cursor. It may be useful when working with In-Memory collections like `Vec` and remote objects like pagination in the API.
 
+**Compile Time Iterator**
+We can use `const {}` to execute code during compilation. Only `const fn` can be used from `const {}` block.
+
+
 ## References
 
 - [A Survey of Every Iterator Variant / blog.yoshuawuyts.com](https://blog.yoshuawuyts.com/a-survey-of-every-iterator-variant/)

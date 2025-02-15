@@ -376,6 +376,36 @@ mod seek_iterators {
     }
 }
 
-fn main() {
-    println!("Hello, world!");
+mod compile_time_iterators {
+    // pub const trait IntoIterator {                        
+    //     type Item;
+    //     type IntoIter: const Iterator<Item = Self::Item>; 
+    //     const fn into_iter(self) -> Self::IntoIter;      
+    // }
+
+    // pub const trait Iterator {                          
+    //     type Item;
+    //     const fn next(&mut self) -> Option<Self::Item>;           
+    //     const fn size_hint(&self) -> (usize, Option<usize>) { .. }
+    // }
+
+    // !WARN: idk what write this
 }
+
+mod lending_iterators {}
+
+mod with_return_value_iterator {}
+
+mod with_next_argument_iterator {}
+
+mod short_circuiting_iterator {}
+
+mod address_sessitive_iterator {}
+
+mod iterator_guaranteeing_destruct {}
+
+mod async_iterator {}
+
+mod concurrent_iterator {}
+
+fn main() {}
