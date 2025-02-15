@@ -22,7 +22,8 @@ Dync-compatibility is an inherent part of the trait and is governed by `Sized` b
 **Double-Ended Iterator**
 Allows you to be at the end and at the start.
 
-
+**Seeking Iterator**
+Allows you to control the `Read` trait cursor. It may be useful when working with In-Memory collections like `Vec` and remote objects like pagination in the API.
 
 ## References
 

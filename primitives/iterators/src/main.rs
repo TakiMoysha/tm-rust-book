@@ -287,6 +287,95 @@ mod double_ended_iterator {
     }
 }
 
+mod seek_iterators {
+    use std::io::{self, Read, Seek, SeekFrom};
+
+    struct SeekIterator {
+        data: Vec<u8>,
+        position: usize,
+    }
+
+    impl SeekIterator {
+        fn new(data: Vec<u8>) -> Self {
+            SeekIterator { data, position: 0 }
+        }
+    }
+
+    impl Read for SeekIterator {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.position >= self.data.len() {
+                return Ok(0); // Конец данных
+            }
+
+            let bytes_read = std::cmp::min(buf.len(), self.data.len() - self.position);
+            buf[..bytes_read]
+                .copy_from_slice(&self.data[self.position..self.position + bytes_read]);
+            self.position += bytes_read;
+
+            Ok(bytes_read)
+        }
+    }
+
+    impl Seek for SeekIterator {
+        fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+            match pos {
+                SeekFrom::Start(offset) => {
+                    if offset > self.data.len() as u64 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "Seek out of bounds",
+                        ));
+                    }
+                    self.position = offset as usize;
+                }
+                SeekFrom::Current(offset) => {
+                    let new_position = self.position as i64 + offset;
+                    if new_position < 0 || new_position > self.data.len() as i64 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "Seek out of bounds",
+                        ));
+                    }
+                    self.position = new_position as usize;
+                }
+                SeekFrom::End(offset) => {
+                    let new_position = self.data.len() as i64 + offset;
+                    if new_position < 0 || new_position > self.data.len() as i64 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "Seek out of bounds",
+                        ));
+                    }
+                    self.position = new_position as usize;
+                }
+            }
+
+            Ok(self.position as u64)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_seek_correct() {
+            let data = b"Hello, world!".to_vec();
+            let mut iterator = SeekIterator::new(data);
+
+            let mut buffer = [0; 5];
+
+            iterator.read_exact(&mut buffer).unwrap();
+            println!("Read: {:?}", String::from_utf8_lossy(&buffer));
+
+            iterator.seek(SeekFrom::Start(7)).unwrap();
+
+            iterator.read_exact(&mut buffer).unwrap();
+            println!("Read: {:?}", String::from_utf8_lossy(&buffer));
+        }
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 }
