@@ -242,6 +242,51 @@ mod dyn_compatible_iterator {
     }
 }
 
+mod double_ended_iterator {
+    use std::iter::DoubleEndedIterator;
+
+    pub struct Counter {
+        count: usize,
+        limit: usize,
+    }
+
+    impl Iterator for Counter {
+        type Item = usize;
+
+        fn next(&mut self) -> Option<usize> {
+            if self.count < self.limit {
+                self.count += 1;
+                Some(self.count)
+            } else {
+                None
+            }
+        }
+    }
+
+    impl DoubleEndedIterator for Counter {
+        fn next_back(&mut self) -> Option<usize> {
+            todo!("not implemented, iterate to start")
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_iterate_to_start() {
+            let mut counter = Counter { count: 0, limit: 5 };
+            counter.map(|el| println!("{}", el)).count();
+            // assert_eq!(counter.next_back(), None);
+            // assert_eq!(counter.next_back(), Some(4));
+            // assert_eq!(counter.next_back(), Some(3));
+            // assert_eq!(counter.next_back(), Some(2));
+            // assert_eq!(counter.next_back(), Some(1));
+            // assert_eq!(counter.next_back(), None);
+        }
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 }

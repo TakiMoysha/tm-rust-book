@@ -19,6 +19,11 @@ Thread-Safe iterator are obtainned by composing a `Sync` and `Send` auto-traits.
 **Dyn-Compatible Iterator**
 Dync-compatibility is an inherent part of the trait and is governed by `Sized` bounds. `Iterator` and `IntoIterator` traits are inherently dyn-compatible, thet means they can be used to create trait objects using the `dyn` keyword.
 
+**Double-Ended Iterator**
+Allows you to be at the end and at the start.
+
+
+
 ## References
 
 - [A Survey of Every Iterator Variant / blog.yoshuawuyts.com](https://blog.yoshuawuyts.com/a-survey-of-every-iterator-variant/)
