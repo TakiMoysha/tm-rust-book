@@ -28,6 +28,11 @@ Allows you to control the `Read` trait cursor. It may be useful when working wit
 **Compile Time Iterator**
 We can use `const {}` to execute code during compilation. Only `const fn` can be used from `const {}` block.
 
+**Lending Iterator**
+Returns a ref to the object that the iterator owns
+
+**Iterator With A Return Value**
+At the end of iterations, it returns some kind of meaning. This allows you to complete its work with some final value, like functions - the iterator returns the value.
 
 ## References
 

@@ -127,6 +127,8 @@ mod thread_safe_iterator {
     unsafe impl Send for SafeCounter {}
     unsafe impl Sync for SafeCounter {}
 
+    // demo type bounds
+    #[allow(dead_code)]
     fn consumer_safe_iterator<I>(iter: I)
     where
         I: IntoIterator<Item: Send> + Send,
@@ -135,23 +137,27 @@ mod thread_safe_iterator {
 
     #[cfg(test)]
     mod tests {
+        use std::sync::mpsc::{self, Receiver, Sender};
         use std::{thread, time::Duration};
 
         use super::*;
 
         #[test]
-        fn should_work_stdlib_iterator_trait() {
+        fn should_iterate_in_parallel() {
+            let (tx, rx): (Sender<i32>, Receiver<i32>) = mpsc::channel();
+
             let mut counter = SafeCounter::new(5);
             let mut counter_clone = counter.clone();
 
             thread::scope(|s| {
                 s.spawn(move || {
                     assert_eq!(counter.next(), Some(1));
-                    thread::sleep(Duration::from_millis(500));
+                    tx.send(0).unwrap();
+                    thread::sleep(Duration::from_millis(100));
                     assert_eq!(counter.next(), Some(3));
                 });
                 s.spawn(move || {
-                    thread::sleep(Duration::from_millis(400));
+                    rx.recv().unwrap();
                     assert_eq!(counter_clone.next(), Some(2));
                 });
             });
@@ -377,24 +383,115 @@ mod seek_iterators {
 }
 
 mod compile_time_iterators {
-    // pub const trait IntoIterator {                        
+    // pub const trait IntoIterator {
     //     type Item;
-    //     type IntoIter: const Iterator<Item = Self::Item>; 
-    //     const fn into_iter(self) -> Self::IntoIter;      
+    //     type IntoIter: const Iterator<Item = Self::Item>;
+    //     const fn into_iter(self) -> Self::IntoIter;
     // }
 
-    // pub const trait Iterator {                          
+    // pub const trait Iterator {
     //     type Item;
-    //     const fn next(&mut self) -> Option<Self::Item>;           
+    //     const fn next(&mut self) -> Option<Self::Item>;
     //     const fn size_hint(&self) -> (usize, Option<usize>) { .. }
     // }
 
     // !WARN: idk what write this
 }
 
-mod lending_iterators {}
+mod lending_iterators {
 
-mod with_return_value_iterator {}
+    struct LeadingIterator<'a, T> {
+        iter: &'a [T],
+        index: usize,
+    }
+
+    impl<'a, T> LeadingIterator<'a, T> {
+        fn new(iter: &'a [T]) -> Self {
+            LeadingIterator { iter, index: 0 }
+        }
+    }
+
+    impl<'a, T> Iterator for LeadingIterator<'a, T> {
+        type Item = &'a T;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.index < self.iter.len() {
+                let item = &self.iter[self.index];
+                self.index += 1;
+                Some(item)
+            } else {
+                None
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_return_reference() {
+            let data = [1, 2, 3, 4, 5];
+            let mut iter = LeadingIterator::new(&data);
+            assert_eq!(iter.next(), Some(&1));
+            assert_eq!(iter.next(), Some(&2));
+            assert_eq!(iter.next(), Some(&3));
+            assert_eq!(iter.next(), Some(&4));
+            assert_eq!(iter.next(), Some(&5));
+            assert_eq!(iter.next(), None);
+        }
+    }
+}
+
+mod with_return_value_iterator {
+    use std::ops::ControlFlow;
+
+    struct ReturningCounter {
+        current: usize,
+        limit: usize,
+    }
+
+    impl ReturningCounter {
+        fn new(limit: usize) -> Self {
+            ReturningCounter { current: 0, limit }
+        }
+    }
+
+    impl Iterator for ReturningCounter {
+        type Item = ControlFlow<u32, usize>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.current < self.limit {
+                let value = self.current;
+                self.current += 1;
+                Some(ControlFlow::Continue(value))
+            } else {
+                Some(ControlFlow::Break(self.current as u32))
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_return_correct_break_value() {
+            let mut iter = ReturningCounter::new(5);
+
+            for res in iter {
+                match res {
+                    ControlFlow::Continue(value) => println!("Yielded: {}", value),
+                    ControlFlow::Break(value) => {
+                        println!("Finished with: {}", value);
+                        assert_eq!(value, 5);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
 
 mod with_next_argument_iterator {}
 
