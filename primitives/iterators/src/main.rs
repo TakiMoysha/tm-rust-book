@@ -447,13 +447,13 @@ mod with_return_value_iterator {
     use std::ops::ControlFlow;
 
     struct ReturningCounter {
-        current: usize,
+        index: usize,
         limit: usize,
     }
 
     impl ReturningCounter {
         fn new(limit: usize) -> Self {
-            ReturningCounter { current: 0, limit }
+            ReturningCounter { index: 0, limit }
         }
     }
 
@@ -461,12 +461,12 @@ mod with_return_value_iterator {
         type Item = ControlFlow<u32, usize>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            if self.current < self.limit {
-                let value = self.current;
-                self.current += 1;
+            if self.index < self.limit {
+                let value = self.index;
+                self.index += 1;
                 Some(ControlFlow::Continue(value))
             } else {
-                Some(ControlFlow::Break(self.current as u32))
+                Some(ControlFlow::Break(self.index as u32))
             }
         }
     }
@@ -493,16 +493,264 @@ mod with_return_value_iterator {
     }
 }
 
-mod with_next_argument_iterator {}
+mod with_next_argument_iterator {
+    struct ArgumentCounter {
+        index: usize,
+        limit: usize,
+    }
 
-mod short_circuiting_iterator {}
+    impl ArgumentCounter {
+        fn new(limit: usize) -> Self {
+            Self { index: 0, limit }
+        }
+    }
 
-mod address_sessitive_iterator {}
+    trait ArgumentIterator {
+        type Item;
+        type Args;
+        fn next(&mut self, args: Self::Args) -> Option<Self::Item>;
+    }
 
-mod iterator_guaranteeing_destruct {}
+    impl ArgumentIterator for ArgumentCounter {
+        type Item = usize;
+        type Args = usize;
 
-mod async_iterator {}
+        fn next(&mut self, increment: Self::Item) -> Option<Self::Item> {
+            if self.index < self.limit {
+                self.index += increment;
+                Some(self.index)
+            } else {
+                None
+            }
+        }
+    }
 
-mod concurrent_iterator {}
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_work() {
+            let mut iter = ArgumentCounter::new(5);
+            assert_eq!(iter.next(1), Some(1));
+            assert_eq!(iter.next(1), Some(2));
+            assert_eq!(iter.next(2), Some(4));
+            assert_eq!(iter.next(3), Some(7));
+            assert_eq!(iter.next(0), None);
+        }
+    }
+}
+
+mod short_circuiting_iterator {
+    struct ShortCircuitingCounter<I> {
+        inner: I,
+        limit: usize,
+    }
+
+    impl<I: Iterator<Item = usize>> ShortCircuitingCounter<I> {
+        fn new(inner: I, limit: usize) -> Self {
+            Self { inner, limit }
+        }
+    }
+
+    impl<I: Iterator<Item = usize>> Iterator for ShortCircuitingCounter<I> {
+        type Item = I::Item;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let value = self.inner.next()?;
+
+            if value < self.limit {
+                Some(value)
+            } else {
+                None
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_work() {
+            // ?NOTE: iterator have size 10, but stop condition is 5
+            let mut iter = ShortCircuitingCounter::new(0..10, 3);
+            assert_eq!(iter.next(), Some(0));
+            assert_eq!(iter.next(), Some(1));
+            assert_eq!(iter.next(), Some(2));
+            assert_eq!(iter.next(), None);
+        }
+    }
+}
+
+mod address_sessitive_iterator {
+    use std::marker::PhantomData;
+    use std::pin::Pin;
+
+    pub trait AddressSensitiveIterator {
+        type Item;
+        fn next(self: Pin<&mut Self>) -> Option<Self::Item>;
+    }
+
+    struct AddressSensitiveCounter {
+        data: Vec<i32>,
+        index: usize,
+    }
+
+    impl AddressSensitiveCounter {
+        fn new(data: Vec<i32>) -> Self {
+            Self { data, index: 0 }
+        }
+    }
+
+    impl Iterator for AddressSensitiveCounter {
+        type Item = i32;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.index < self.data.len() {
+                let value = self.data[self.index];
+                self.index += 1;
+                Some(value)
+            } else {
+                None
+            }
+        }
+    }
+    // impl AddressSensitiveIterator for AddressSensitiveCounter {
+    //     type Item = i32;
+    //
+    //     fn next(self: Pin<&mut Self>) -> Option<Self::Item> {
+    //         let this = self.get_mut();
+    //
+    //         if this.index < this.data.len() {
+    //             let value = this.data[this.index];
+    //             this.index += 1;
+    //             Some(value)
+    //         } else {
+    //             None
+    //         }
+    //     }
+    // }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_return_pin_ref_to_data() {
+            let data = [0, 1, 2];
+            let mut iter = AddressSensitiveCounter::new(data.to_vec());
+            // ?NOTE: for pin address
+            let pinned_iter = Pin::new(&mut iter);
+
+            for (index, value) in pinned_iter.get_mut().enumerate() {
+                assert_eq!(value, index as i32);
+            }
+        }
+
+        #[test]
+        fn should_save_address() {
+            let data = [0, 1, 2];
+            let mut iter = AddressSensitiveCounter::new(data.to_vec());
+            let pinned_iter = Pin::new(&mut iter);
+            let address_before = &*pinned_iter as *const _ as usize;
+            let new_address_iter = pinned_iter;
+            assert_eq!(address_before, &*new_address_iter as *const _ as usize);
+        }
+
+        #[test]
+        fn should_change_address() {
+            let data = [0, 1, 2];
+            let iter = AddressSensitiveCounter::new(data.to_vec());
+            let address_before = &iter as *const _ as usize;
+            let moved_iter = iter;
+            assert_ne!(address_before, &moved_iter as *const _ as usize);
+        }
+    }
+}
+
+mod iterator_guaranteeing_destruct {
+    #[derive(Clone)]
+    struct Resource {
+        id: String,
+    }
+
+    impl Drop for Resource {
+        fn drop(&mut self) {
+            println!("Dropping {}", self.id);
+        }
+    }
+
+    struct ResourceIterator<'a> {
+        resources: &'a Vec<Resource>,
+        index: usize,
+    }
+
+    impl<'a> ResourceIterator<'a> {
+        fn new(resources: &'a Vec<Resource>) -> Self {
+            ResourceIterator {
+                resources,
+                index: 0,
+            }
+        }
+    }
+
+    impl<'a> Iterator for ResourceIterator<'a> {
+        type Item = &'a Resource;
+
+        // ?NOTE: return reference to resource
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.index < self.resources.len() {
+                let val = &self.resources[self.index];
+                self.index += 1;
+                Some(val)
+            } else {
+                None
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn should_destruct_regularly_case() {
+            let resource = [
+                Resource {
+                    id: "a".to_string(),
+                },
+                Resource {
+                    id: "b".to_string(),
+                },
+            ]
+            .to_vec();
+            {
+                let mut iter = ResourceIterator::new(&resource);
+                assert_eq!(dbg!(&iter.next().unwrap().id), "a");
+            }
+        }
+    }
+}
+
+mod async_iterator {
+    // !TODO: added async runtime
+}
+
+mod concurrent_iterator {
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use rayon::prelude::*;
+
+        #[test]
+        fn test_parallel_iterator() {
+            let nums: Vec<i32> = (0..100).collect();
+            let squared: Vec<i32> = nums.par_iter().map(|x| x * x).collect();
+            println!("{:?}", squared);
+        }
+    }
+}
 
 fn main() {}

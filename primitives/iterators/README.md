@@ -34,6 +34,24 @@ Returns a ref to the object that the iterator owns
 **Iterator With A Return Value**
 At the end of iterations, it returns some kind of meaning. This allows you to complete its work with some final value, like functions - the iterator returns the value.
 
+**Iterator with a Next Argument**
+Allows you to pass additional arguments to the `next` method. It gives more interactivity, allowing the user to control the iterator behavior.
+
+**Short-Circuiting Iterator**
+Allows you to interrupt the iteration process if a condition is met.
+
+**Address-Sensitive Iterator**
+Supports self-lifting types that must maintain their address space. That is, the types of fields that refer to other fields within the same type, which requires stability of the address in memory.
+
+**Iterator Guaranteeing Destruct**
+Guarantees that the associated value will be dropped when the iterator is dropped.
+
+**Async Iterator**
+`Async` keyword can transform imperative function bodies into state machine.
+
+**Concurrent Iterator**
+It processes elements in parallel, using several flows, which can significantly increase productivity when working with large volumes of data.
+
 ## References
 
 - [A Survey of Every Iterator Variant / blog.yoshuawuyts.com](https://blog.yoshuawuyts.com/a-survey-of-every-iterator-variant/)
