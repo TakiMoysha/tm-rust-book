@@ -1,13 +1,13 @@
 fn expensive_check() -> bool {
     println!("expensive check");
-    return true;
+    true
 }
 
 // check only in debug mode
 #[cfg(debug_assertions)]
 fn another_expensive_check() -> bool {
     println!("Thoroughly performing some other expensive check");
-    return true;
+    true
 }
 
 // check only in release mode
