@@ -14,11 +14,13 @@ fn list_of_services(conn: &Connection) -> Result<Vec<String>, ()> {
 
 mod notify {
     use std::collections::HashMap;
+    use std::ops::Deref;
     use std::time::Duration;
 
-    use dbus::arg::Variant;
+    use dbus::arg::{RefArg, Variant};
     use dbus::blocking::Connection;
 
+    type DbusMap = HashMap<String, Variant<Box<dyn RefArg>>>;
     // https://github.com/KDE/liquidshell/blob/master/org.freedesktop.Notifications.xml
     struct NotifyPayload {
         app_name: String,
@@ -27,8 +29,29 @@ mod notify {
         summary: String,
         body: String,
         actions: Vec<String>,
-        hints: HashMap<String, Variant<String>>,
+        hints: DbusMap,
         expire_timeout: i32,
+    }
+
+    #[derive(Clone, Copy)]
+    enum Urgency {
+        Low,
+        Normal,
+        Critical,
+    }
+
+    impl Urgency {
+        fn to_mpris(self) -> &'static str {
+            match self {
+                Urgency::Low => "low",
+                Urgency::Normal => "normal",
+                Urgency::Critical => "critical",
+            }
+        }
+    }
+
+    fn to_variant(value: u8) -> Variant<Box<dyn RefArg>> {
+        Variant(Box::new(value.to_string()))
     }
 
     pub fn send_test_notification(conn: &Connection) -> Result<(), ()> {
@@ -41,16 +64,16 @@ mod notify {
         let res: Result<(), _> =
             proxy.method_call("org.freedesktop.Notifications", "GetServerInformation", ());
 
+        let mut _hinst = HashMap::new();
+        _hinst.insert(String::from("urgency"), to_variant(2));
         let payload = NotifyPayload {
             app_name: String::from("dbus-test"),
             replaces_id: 1010,
-            app_icon: String::from(
-                "$HOME/.local/share/icons/hicolor/32x32/apps/steam_icon_2590260.png",
-            ),
+            app_icon: String::from("/usr/share/icons/hicolor/48x48/apps/org.xfce.about.png"),
             summary: String::from("test"),
             body: String::from("test"),
             actions: Vec::new(),
-            hints: HashMap::new(),
+            hints: _hinst,
             expire_timeout: 5000,
         };
 
