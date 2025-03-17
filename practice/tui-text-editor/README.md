@@ -1,5 +1,7 @@
 ## TUI Editor
 
+**Teletype Editor (TTY)** - a text editor for the terminal.
+
 **Buffer**
 
 - `View` - used information from `Editor` (like text-related event) to enhance rendering efficiency and pass them to `Buffer`;
@@ -51,7 +53,6 @@ std::panic::set_hook(Box::new(move |info| {
 ```
 
 **Flags Code Conventions**
-
 
 ## References
 
