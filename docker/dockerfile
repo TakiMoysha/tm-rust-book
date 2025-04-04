@@ -1,0 +1,59 @@
+FROM rust:latest AS builder
+
+RUN rustup target addd x86_64-unknown-linux-musl
+RUN apt update && apt install -y musl-tools musl-dev
+RUN update -ca-certificates
+
+ENV USER=app-worker
+ENV UID=10001
+
+RUN addduser \
+  --disabled-password \
+  --gecos "" \
+  --home "/nonexistent" \
+  --shell "/sbin/nologin" \
+  --no-create-home \
+  --uid "${UID}" \
+  "${USER}"
+
+
+WORKDIR /rsapp-build
+
+COPY ./ .
+
+## depends on final base image
+RUN cargo build --target x86_64-unknown-linux-musl --release
+
+# ==============================================
+FROM scratch 
+# `glibc` is unavailable in scratch image =>
+# here we use "x86_64-unknown-linux-musl" and
+# `jemalloc` (be aware, some people are reporing errors)
+
+# ==============================================
+# FROM alpine
+# is a security-oriented, lightweeight distribution based on musl libc and busybox
+# used when "scratch" is not enough and u need a package manager for install dependencies such as `ssh` or `chromium`
+# we need to statically link to `musl` => "x86_64-unknown-linux-musl"
+
+# ==============================================
+# FROM gcr.io/distroless/cc
+# we no need to use the musl libc
+# => rewrite build command to "cargo build --release"
+
+# ==============================================
+# FROM debian:bookworm-slim
+# based on "glibc" and no longer need to use the `x86_64-unknown-linux-musl`
+# => rewrite build command to "cargo build --release"
+
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
+
+WORKDIR /rsapp
+
+# check build directory
+COPY --from=builder /rsapp-build/target/x86_64-unknown-linux-musl/release/rsapp ./
+
+USER app-worker:app-worker
+
+CMD ["./rsapp"]
