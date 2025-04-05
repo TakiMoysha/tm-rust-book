@@ -20,3 +20,7 @@ build:
 .PHONY: docker_build
 docker_build:
 	docker build -t tm-dev/demo-medium.rs .
+
+.PHONY: tower-dev
+tower_dev:
+	cargo run -p tower-service --example=tower-service-alone
