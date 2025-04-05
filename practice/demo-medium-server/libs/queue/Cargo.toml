@@ -1,0 +1,7 @@
+[package]
+name = "queue-lib"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "./queue.rs"

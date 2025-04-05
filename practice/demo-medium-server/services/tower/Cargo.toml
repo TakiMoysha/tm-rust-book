@@ -1,0 +1,14 @@
+[package]
+name = "tower-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true }
+
+[lib]
+path = "./lib.rs"
+
+[[example]]
+name = "tower-service-alone"
+path = "./examples/tower-service-alone.rs"

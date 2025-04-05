@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+  "cli/demo-server",
+  "libs/queue",
+  "libs/stripe",
+  "services/users",
+  "services/tower",
+  "cli/demo-server",
+]
+
+[workspace.dependencies]
+tokio = { version = "1.44.1", features = ["full"] }
