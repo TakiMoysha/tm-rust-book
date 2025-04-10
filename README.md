@@ -1,28 +1,18 @@
-## Resources
-
-- Rust Book
-- Idiomatic Rust
-- https://rust-unofficial.github.io/too-many-lists/
-
 ## Structures
 
-- *bevy* - bevy based projects
-- *get_started* - rust book notes
-- *practice* - abyss of rust
-- *primitives* - review atomic crates or rust concepts
-- *samples* - projects immitating something
+- _bevy_ - bevy based projects
+- _get_started_ - rust book notes
+- _practice_ - abyss of rust
+- _primitives_ - review atomic crates or rust concepts
+- _samples_ - projects immitating something
 
-## Roadmap
+## TODO
 
-1. tokio shared state
-2. write more abount zero-copy approach
-3. write about copy-on-write approach
-4. try ICE protocol
-5. pingore
-6. advent_of_code, 5 day - implement rule tree structure
-7. simple-ringboard
-8. streaming:
-   https://xd009642.github.io/2025/01/20/streaming-audio-APIs-the-axum-server.html
+1. zero-copy
+2. copy-on-write
+3. pingore
+4. advent_of_code
+5. ringboard-review
 
 ## Rust-Protocols
 
@@ -32,18 +22,8 @@
 - https://datatracker.ietf.org/doc/rfc9000/
 - https://w3c.github.io/webtransport
 
-## Rust Game Server
+## Bibliography
 
-https://habr.com/ru/articles/679994/
-
-- geo data ( see redis )
-- geo hash
-- GEOADD, GEODIST, GEORADIUS и GEORADIUSBYMEMBER
-- GeoSet
-- Nakama tokia rust
-- Mudpi tokio rust
-- Hazel tokio rust
-
-## Archived Projects
-
-- [get_started](./get_started)
+- Rust Book
+- Idiomatic Rust
+- https://rust-unofficial.github.io/too-many-lists/

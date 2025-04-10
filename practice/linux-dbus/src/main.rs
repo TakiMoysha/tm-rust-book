@@ -14,7 +14,6 @@ fn list_of_services(conn: &Connection) -> Result<Vec<String>, ()> {
 
 mod notify {
     use std::collections::HashMap;
-    use std::ops::Deref;
     use std::time::Duration;
 
     use dbus::arg::{RefArg, Variant};

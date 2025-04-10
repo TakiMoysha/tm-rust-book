@@ -1,4 +1,4 @@
-use primitives_mapreduce::{parallel_sum, single_thread_sum};
+use mapreduce::{parallel_sum, single_thread_sum};
 
 fn main() {
     divan::main();
