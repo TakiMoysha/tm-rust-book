@@ -1,12 +1,2 @@
-[package]
-name = "get_started"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-itertools = "0.14.0"
-rand = "0.9.2"
-
 [workspace]
-members = ["samples"]
-
+members = ["rust_book", "workspace_lib"]
