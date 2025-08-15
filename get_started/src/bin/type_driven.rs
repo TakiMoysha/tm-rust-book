@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     fmt::{Display, Formatter},
-    intrinsics::unreachable,
     ops::RangeBounds,
 };
 

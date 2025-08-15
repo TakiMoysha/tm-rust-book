@@ -1,14 +1,14 @@
+use rand::distr::{Distribution, Uniform};
 use rand::Rng;
-use rand::distributions::{Distribution, Uniform};
 
 pub fn random_within_range() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    println!("Integer: {}", rng.gen_range(0..10));
-    println!("Float: {}", rng.gen_range(0.0..10.0));
+    println!("Integer: {}", rng.random_range(0..10));
+    println!("Float: {}", rng.random_range(0.0..10.0));
 
-    let mut rng = rand::thread_rng();
-    let die = Uniform::from(1..7);
+    let mut rng = rand::rng();
+    let die = Uniform::try_from(1..=7).unwrap();
 
     loop {
         let throw = die.sample(&mut rng);

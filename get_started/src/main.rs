@@ -10,6 +10,11 @@ mod articles;
 mod rust_book;
 mod data_structure;
 
+// mod types;
+mod types {
+
+}
+
 #[warn(unused_must_use)]
 fn main() {
     traits::run()
