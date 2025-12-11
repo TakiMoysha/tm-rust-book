@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod configuration_manager;
 mod data_collector;
 mod dependency_container;

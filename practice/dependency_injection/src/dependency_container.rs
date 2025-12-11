@@ -4,7 +4,7 @@ use std::{cell::OnceCell, future::Future, rc::Rc};
 
 use crate::configuration_manager::ConfigurationManager;
 use crate::data_collector::{ApiDataCollector, DataCollector, SqlDataCollector};
-use crate::logging_service::{LoggingService, StdoutLogginService};
+use crate::logging_service::{LoggingService, StdoutLoggingService};
 use crate::message_service::{MessageService, SMTPMessageServiceImpl};
 use crate::monitorint_system::MonitoringSystem;
 use crate::notification_message_builder::{
@@ -16,7 +16,7 @@ pub struct DependencyContainer {
     // We will only want to read the configuration once
     configuration_manager: Rc<OnceCell<ConfigurationManager>>,
     // scope dependencies just use an [OnceCell]
-    logging_service: AsyncOnceCell<StdoutLogginService>,
+    logging_service: AsyncOnceCell<StdoutLoggingService>,
     alert_id: String,
 }
 
@@ -99,8 +99,8 @@ impl DependencyContainer {
         self.create_message_service_dyn(conf_manager)
     }
 
-    async fn create_logging_service(&self, alert_id: &str) -> StdoutLogginService {
-        StdoutLogginService::new(alert_id).await
+    async fn create_logging_service(&self, alert_id: &str) -> StdoutLoggingService {
+        StdoutLoggingService::new(alert_id).await
     }
 
     // LoggingService ('_) has the same lifetime as the DependencyContainer (&self)

@@ -11,21 +11,21 @@ impl<L: LoggingService + ?Sized> LoggingService for &L {
     }
 }
 
-pub struct StdoutLogginService {
+pub struct StdoutLoggingService {
     alert_id: String,
 }
 
-impl StdoutLogginService {
+impl StdoutLoggingService {
     pub async fn new(alert_id: &str) -> Self {
         sleep(Duration::from_secs(2)).await; // async simulation
 
-        StdoutLogginService {
+        StdoutLoggingService {
             alert_id: alert_id.to_string(),
         }
     }
 }
 
-impl LoggingService for StdoutLogginService {
+impl LoggingService for StdoutLoggingService {
     fn log(&self, msg: &str) {
         println!("[Alert {}]: {}", self.alert_id, msg);
     }
