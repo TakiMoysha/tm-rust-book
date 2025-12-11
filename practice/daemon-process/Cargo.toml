@@ -1,8 +1,0 @@
-[package]
-name = "daemon-process"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-daemonize = "0.5.0"
-xdg = "2.5.2"

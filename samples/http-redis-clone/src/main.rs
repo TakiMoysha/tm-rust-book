@@ -143,7 +143,7 @@ async fn main() -> Result<()> {
 mod tests {
     use super::*;
 
-    fn single_ping_request_shoud_return_pong() {
+    fn single_ping_request_should_return_pong() {
         // assert_eq!("+PONG\r\n", handle_request().await.unwrap());
         todo!()
     }
@@ -151,15 +151,15 @@ mod tests {
     /// несколько запросов к серверу
     /// сревер должен обрабатывать все команды от клиента
     /// пока клиент не отключится
-    fn sequential_ping_request_shoud_return_pong() {
+    fn sequential_ping_request_should_return_pong() {
         todo!()
     }
 
-    fn multiple_client_request_shoud_return_pong() {
+    fn multiple_client_request_should_return_pong() {
         todo!()
     }
 
-    fn echo_command_shoud_return_requested_data() {
+    fn echo_command_should_return_requested_data() {
         todo!()
     }
 

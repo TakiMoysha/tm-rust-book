@@ -1,8 +1,0 @@
-set dotenv-load
-
-
-bin name="":
-  cargo run --bin {{name}}
-
-test name="" test_name="":
-  cargo test --bin {{name}} {{test_name}} -- --nocapture

@@ -102,7 +102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let active_services = list_of_services(&conn).unwrap();
     active_services
         .iter()
-        .map(|service| println!("{}", service));
+        .for_each(|service| println!("{}", service));
 
     // =========================================
     let res = send_test_notification(&conn);

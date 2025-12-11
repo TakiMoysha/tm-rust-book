@@ -132,7 +132,7 @@ mod builder {
 
     // Bancer responsibility:
     //  * Create and init PickBalancer
-    //  * Set up interraction with ClientConnection
+    //  * Set up interaction with ClientConnection
     //  * Registering a balancer for use by the client
     pub struct PickBalancerBuilder;
 
