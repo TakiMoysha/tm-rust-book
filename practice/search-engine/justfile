@@ -1,0 +1,19 @@
+set dotenv-load
+
+
+build:
+  wasm-pack build
+
+[doc("Required install after every wasm package build. Ex: just bun run dev")]
+[working-directory: "frontend"]
+bun *ARGS:
+  bun {{ ARGS }}
+
+[doc("Ex: just demo")]
+[working-directory: "frontend"]
+demo *ARGS:
+  bun install
+  bun run dev {{ ARGS }}
+
+
+
