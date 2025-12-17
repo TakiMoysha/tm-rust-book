@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+pub trait SearchEngine {}
+
 #[wasm_bindgen(start)]
 fn run() {
     unsafe {

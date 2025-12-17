@@ -4,6 +4,9 @@ set dotenv-load
 build:
   wasm-pack build
 
+test:
+  wasm-pack test --node
+
 [doc("Required install after every wasm package build. Ex: just bun run dev")]
 [working-directory: "frontend"]
 bun *ARGS:
