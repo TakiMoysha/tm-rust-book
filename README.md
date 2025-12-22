@@ -4,7 +4,7 @@
 - _get_started_ - rust book notes
 - _practice_ - abyss of rust
 - _primitives_ - review atomic crates or rust concepts
-- _samples_ - projects immitating something
+- _samples_ - projects imitating something
 
 ## TODO
 
@@ -13,6 +13,10 @@
 3. pingore
 4. advent_of_code
 5. ringboard-review
+
+## Want to try
+
+- bumpalo - arena allocations for files
 
 ## Rust-Protocols
 
