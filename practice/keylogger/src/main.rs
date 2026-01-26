@@ -3,6 +3,8 @@
 //
 // Show input devices: `cat /proc/bus/input/devices | less`
 // we needed only where 'B: KEY=' have a '';
+//
+// TODO: added gui with smithay-client-toolkit
 
 use std::io;
 use std::os::fd::AsRawFd;
