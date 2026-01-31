@@ -1,0 +1,2 @@
+// destination: /etc/udev/rules.d/99-dev.takimoysha.linuxdesktop.rules
+SUBSYSTEM=="input", GROUP=="devlab", MODE=="0660"

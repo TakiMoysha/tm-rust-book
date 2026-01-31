@@ -1,0 +1,14 @@
+// how can ask this in polkit
+// :set filetype=javascript
+
+polkit.addRule(function (action, subject) {
+  if (
+    action.id == "dev.takimoysha.linuxdesktop.read-evdev" &&
+    subject.local &&
+    subject.active &&
+    subject.isInGroup("devlab")
+  ) {
+    return polkit.Result.YES
+  }
+})
+

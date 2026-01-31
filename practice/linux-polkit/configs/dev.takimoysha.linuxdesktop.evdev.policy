@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "http://www.freedesktop.org/standards/shared/1.0/policyconfig.dtd">
+<policyconfig>
+
+  <action id="dev.takimoysha.linuxdesktop.read-evdev">
+    <description>Read raw input events from /dev/input/eventX</description>
+    <message>Application wants to read raw input events. Grant access?</message>
+    <icon_name>dialog-information</icon_name>
+
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_self</allow_active>
+    </defaults>
+
+    <!-- <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate> -->
+  </action>
+
+</policyconfig>
