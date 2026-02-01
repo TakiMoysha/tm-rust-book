@@ -16,6 +16,7 @@
     </defaults>
 
     <!-- <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate> -->
+    <!-- <annotate key="org.freedesktop.policykit.exec">/usr/bin/evdev-reader</annotate> -->
   </action>
 
 </policyconfig>

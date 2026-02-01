@@ -8,5 +8,6 @@ anyhow = "1.0.100"
 dbus = "0.9.10"
 env_logger = "0.11.8"
 evdev = "0.13.2"
+nix = { version = "0.31.1", features = ["user"] }
 smithay-client-toolkit = "0.20.0"
 wayland-client = "0.31.12"

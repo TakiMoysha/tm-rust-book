@@ -7,25 +7,16 @@
 // `subject` - it is object who perform action
 // `action` - it is object involved action
 
-use std::{collections::HashMap, time::Duration};
-
 use dbus::{
-    arg::{self, AppendAll, ReadAll, RefArg},
+    arg::{self, AppendAll, ArgType, ReadAll, RefArg},
     blocking::Connection,
 };
-
-// #[interface()]
-// struct DBusObject {}
-
-#[derive(Debug)]
-struct AuthorizationResult {
-    is_authorized: bool,
-    is_challenge: bool,
-    details: HashMap<String, String>,
-}
+use nix::unistd::Uid;
+use std::{collections::HashMap, time::Duration};
 
 fn permitted_operation() -> Result<(), Box<dyn std::error::Error>> {
     let conn = Connection::new_system()?;
+    let name = conn.unique_name().to_string();
 
     let proxy = conn.with_proxy(
         "org.freedesktop.PolicyKit1",
@@ -33,40 +24,51 @@ fn permitted_operation() -> Result<(), Box<dyn std::error::Error>> {
         Duration::from_secs(5),
     );
 
-    let mut subject_process_opts: HashMap<&str, arg::Variant<Box<dyn RefArg>>> = HashMap::new();
-    subject_process_opts.insert("pid", arg::Variant(Box::new(std::process::id())));
-    subject_process_opts.insert("start-time", arg::Variant(Box::new(0 as u64)));
-    let subject_process = ("unix-process".to_string(), subject_process_opts);
+    // let mut subject_process_opts: HashMap<&str, arg::Variant<Box<dyn RefArg>>> = HashMap::new();
+    // subject_process_opts.insert("pid", arg::Variant(Box::new(std::process::id())));
+    // subject_process_opts.insert("uid", arg::Variant(Box::new(nix::unistd::Uid::current().as_raw())));
+    // subject_process_opts.insert("start-time", arg::Variant(Box::new(0 as u64)));
+    // let subject_process = ("unix-process".to_string(), subject_process_opts);
 
-    // let mut subject_opts: HashMap<String, arg::Variant<Box<dyn RefArg>>> = HashMap::new();
-    // subject_opts.insert("session-id", arg::Variant("".to_string()));
+    // let mut subject_user_opts: HashMap<&str, arg::Variant<Box<dyn RefArg>>> = HashMap::new();
+    // subject_user_opts.insert("uid", arg::Variant(Box::new(Uid::current().as_raw())));
+    // let subject_user = ("unix-user", subject_user_opts);
 
-    // let subject_session = ("unix-session".to_string(), subject_opts);
+    let subject_bus = (
+        "system-bus-name",
+        HashMap::from([("name".to_string(), arg::Variant(name))]),
+    );
 
     let mut details: HashMap<String, String> = HashMap::new();
-    details.insert("AllowUserInteraction".to_string(), "true".to_string());
+    // details.insert("AllowUserInteraction".to_string(), "true".to_string());
 
     const CHECK_AUTH_ALLOW_USER_INTERACTION: u32 = 1;
 
-    let (auth_result, _details): (bool, Vec<u8>) = proxy.method_call(
+    println!("{:#?} {:#?}", subject_bus, details);
+    // let (result): (bool, bool, HashMap<String, String>) = proxy.method_call(
+    let (result): Result<(), _> = proxy.method_call(
         "org.freedesktop.PolicyKit1.Authority",
         "CheckAuthorization",
         (
-            subject_process,
-            "dev.takimoysha.linuxdesktop.read-evdev".to_string(),
+            subject_bus,
+            "dev.takimoysha.linuxdesktop.read-evdev",
             details,
             CHECK_AUTH_ALLOW_USER_INTERACTION,
             "",
         ),
-    )?;
+    );
+    dbg!(result);
 
-    if auth_result {
-        println!("Polkit ALLOW operation");
-    // } else if auth_result.is_challenge {
-    //     println!("Polkit CHALLENGE operation - required user accepti.");
-    } else {
-        println!("Polkit DENY operation");
-    }
+    // println!("result: {:#?}", result);
+
+    // if auth_result {
+    //     println!("Polkit ALLOW operation");
+    //
+    // // } else if auth_result.is_challenge {
+    // //     println!("Polkit CHALLENGE operation - required user accepti.");
+    // } else {
+    //     println!("Polkit DENY operation");
+    // }
 
     Ok(())
 }
@@ -173,3 +175,12 @@ fn main() {
         eprintln!("Error: {}", permission.unwrap_err());
     }
 }
+
+// gdbus call --session \
+//   --dest org.freedesktop.PolicyKit1 \
+//   --object-path /org/freedesktop/PolicyKit1/Authority \
+//   --method org.freedesktop.PolicyKit1.Authority.CheckAuthorization \
+//   "('unix-process', {'pid': <uint32>, 'uid': <int32>, 'start-time': <uint64>})" \
+//   "dev.takimoysha.linuxdesktop.read-evdev" \
+//   "{}" \
+//   "1" \

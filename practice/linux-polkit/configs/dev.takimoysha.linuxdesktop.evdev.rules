@@ -8,7 +8,9 @@ polkit.addRule(function (action, subject) {
     subject.active &&
     subject.isInGroup("devlab")
   ) {
+    polkit.log(`dev.takimoysha.linuxdesktop.read-evdev: action=<${action.id}>, subject=<${subject.id}>`)
     return polkit.Result.YES
+    // return polkit.Result.NOT_HANDLE
   }
 })
 
