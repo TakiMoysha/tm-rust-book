@@ -1,0 +1,8 @@
+[package]
+name = "vnc-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rustvncserver = "2.2.1"
+tokio = "1.49.0"
