@@ -108,7 +108,7 @@ mod thread_safe_iterator {
                 limit,
             }
         }
-    }
+    
 
     impl Iterator for SafeCounter {
         type Item = usize;
@@ -141,6 +141,8 @@ mod thread_safe_iterator {
         use std::{thread, time::Duration};
 
         use super::*;
+
+        type ShouldIterateInParallelFn = fn();
 
         #[test]
         fn should_iterate_in_parallel() {
@@ -183,7 +185,7 @@ mod dyn_compatible_iterator {
     }
 
     impl Zoo {
-        // 'static lifetime indicated, what Entity type lifes more than Zoo
+        // 'static lifetime indicated, what Entity type lives more than Zoo
         // Box puts the object in a heap, because The size is not determined
         //
         // ?NOTE: take any type that implements Entity trait, with known scope at compile time
@@ -197,7 +199,7 @@ mod dyn_compatible_iterator {
         }
 
         // ?NOTE: accepts the pointer to a dynamically dedicated object
-        // `dyn` keyword allows skip the type difinition at compile time
+        // `dyn` keyword allows skip the type definition at compile time
         // at runtime will be dynamically dispatched
         // that more flexible than `impl Entity + 'static`
         fn from_vec_dyn(animals: Vec<&str>, entity: Box<dyn Entity>) -> Self {
