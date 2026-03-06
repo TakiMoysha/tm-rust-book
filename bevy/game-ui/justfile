@@ -1,0 +1,6 @@
+set dotenv-load
+
+dev:
+  VK_INSTANCE_LAYERS= \
+  VK_LAYER_PATH= \
+  cargo run
