@@ -3,8 +3,23 @@ name = "game-ui"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+resolver = "3"
+# members = ["crates/*"]
+
 [dependencies]
-bevy = { version = "0.18.1", features = ["wayland"] }
+bevy_input = "0.18.1"
+
+bevy = { version = "0.18.1", default-features = false, features = [
+  "ui",
+  "bevy_render",
+  "std",
+  "wayland",
+] }
+
+[dev-dependencies]
+bevy_egui = "0.39.1"
+bevy-inspector-egui = "0.36.0"
 
 [features]
 default = ["dev_native"]

@@ -45,7 +45,6 @@ fn main() {
         .add_systems(OnEnter(AppState::Playing), scene::setup_scene)
         .add_systems(OnExit(AppState::Playing), scene::cleanup_scene)
         .add_systems(
-        .add_systems(
             Update,
             (
                 main_menu::play_button_pressed,
