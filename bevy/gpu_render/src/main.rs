@@ -2,8 +2,7 @@ use bevy::app::PluginGroupBuilder;
 use bevy::log::LogPlugin;
 use bevy::{prelude::*, window::WindowResized};
 
-pub mod demo;
-pub mod statistics;
+mod stats;
 
 fn make_visible(mut window: Query<&mut Window>) {
     window.single_mut().visible = true;
@@ -37,7 +36,7 @@ fn main() {
         .add_plugins((
             ow_default_plugins,
             TakiAppPlugins,
-            statistics::TakiStatisticsPlugins,
+            stats::WindowStatsPluginGroup,
         ))
         .run();
 }
@@ -46,8 +45,7 @@ pub struct TakiAppPlugins;
 
 impl PluginGroup for TakiAppPlugins {
     fn build(self) -> PluginGroupBuilder {
-        PluginGroupBuilder::start::<Self>()
-            .add(particles::CorePlugin)
+        PluginGroupBuilder::start::<Self>().add(particles::CorePlugin)
     }
 }
 
@@ -197,10 +195,7 @@ pub mod particles {
         }
     }
 
-    fn setup(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-    ) {
+    fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(TextBundle::from_section(
             "Particles",
             TextStyle {
