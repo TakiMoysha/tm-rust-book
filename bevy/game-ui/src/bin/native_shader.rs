@@ -2,14 +2,21 @@ use bevy::{
     prelude::*, reflect::TypePath, render::render_resource::AsBindGroup, shader::ShaderRef,
 };
 
-const ASSET_IMAGE_PATH: &str = "textures/bricks1.png";
 const SHADER_ASSET_PATH: &str = "shaders/simple.wgsl";
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, MaterialPlugin::<CustomMaterial>::default()))
         .add_systems(Startup, setup)
+        .add_systems(Update, rotate_cube)
         .run();
+}
+
+fn rotate_cube(mut query: Query<&mut Transform, With<Mesh3d>>) {
+    for mut transform in &mut query {
+        transform.rotate_y(0.01);
+        transform.rotate_x(0.005);
+    }
 }
 
 fn setup(
@@ -31,7 +38,6 @@ fn setup(
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 struct CustomMaterial {}
-
 
 impl Material for CustomMaterial {
     fn fragment_shader() -> ShaderRef {
