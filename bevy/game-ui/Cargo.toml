@@ -1,3 +1,5 @@
+cargo-features = ["codegen-backend"]
+
 [package]
 name = "game-ui"
 version = "0.1.0"
@@ -12,9 +14,10 @@ bevy_input = "0.18.1"
 
 bevy = { version = "0.18.1", default-features = false, features = [
   "ui",
-  "bevy_render",
   "std",
-  "wayland",
+  "bevy_render",
+  "bevy_shader",
+  "bevy_mesh",
 ] }
 
 [dev-dependencies]
@@ -24,18 +27,27 @@ bevy-inspector-egui = "0.36.0"
 [features]
 default = ["dev_native"]
 dev = ["bevy/dynamic_linking", "bevy/bevy_dev_tools", "bevy/bevy_ui_debug"]
-dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
+dev_native = [
+  "dev",
+  "bevy/3d", # debug
+  "bevy/file_watcher",
+  "bevy/embedded_watcher",
+  "bevy/wayland",
+]
 
 [profile.dev]
+codegen-backend = "cranelift"
 opt-level = 1
 
 [profile.dev.package."*"]
+codegen-backend = "llvm"
 opt-level = 3
 
 [profile.dev.package.wgpu-types]
 debug-assertions = false
 
 [profile.release]
+codegen-backend = "llvm"
 codegen-units = 1
 lto = "thin"
 
@@ -43,3 +55,7 @@ lto = "thin"
 inherits = "release"
 opt-level = "s"
 strip = "debuginfo"
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]

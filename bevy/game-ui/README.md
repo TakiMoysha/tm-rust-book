@@ -33,3 +33,25 @@ src/
 - **MainMenu**: кнопки Play, Options, Quit
 - **Playing**: ESC - возврат в MainMenu
 - **Options**: кнопка Back
+
+# Cargo
+
+**Features** - фичи, настраиваемые пакеты. По дефолту настроен "dev_native", который поддягивает дополнительные крейты.
+
+```bash
+cargo run --features "bevy/file_watcher" # запустить но вместо features по умолчанию переданныe
+
+cargo build --release --features "dev" # собрать релизную сборку, но с инструментами из dev
+
+cargo build --release --no-default-features # собрать релизную сборку
+```
+
+
+**Детализированные Features** - настраиваются конкретно под бинарники, что бы не тянуть их во все пакеты.
+
+```toml
+[[bin]]
+name = "test_shaders"
+path = "src/bin/test_shaders.rs"
+required-features = ["dev", "bevy/bevy_shader"]
+```
