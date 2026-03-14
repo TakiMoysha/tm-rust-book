@@ -10,8 +10,6 @@ resolver = "3"
 # members = ["crates/*"]
 
 [dependencies]
-bevy_input = "0.18.1"
-
 bevy = { version = "0.18.1", default-features = false, features = [
   "ui",
   "std",
@@ -19,6 +17,8 @@ bevy = { version = "0.18.1", default-features = false, features = [
   "bevy_shader",
   "bevy_mesh",
 ] }
+bevy_input = "0.18.1"
+clap = { version = "4.5.60", features = ["cargo"] }
 
 [dev-dependencies]
 bevy_egui = "0.39.1"
@@ -29,7 +29,7 @@ default = ["dev_native"]
 dev = ["bevy/dynamic_linking", "bevy/bevy_dev_tools", "bevy/bevy_ui_debug"]
 dev_native = [
   "dev",
-  "bevy/3d", # debug
+  "bevy/3d",               # debug
   "bevy/file_watcher",
   "bevy/embedded_watcher",
   "bevy/wayland",
