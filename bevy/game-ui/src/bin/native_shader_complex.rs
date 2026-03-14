@@ -13,13 +13,13 @@ struct WithShaderMaterial {}
 
 impl Material for WithShaderMaterial {
     fn fragment_shader() -> ShaderRef {
-        // DEBUG_SHADER_ASSET_PATH.into()
-        SHADER_ASSET_PATH.into()
+        DEBUG_SHADER_ASSET_PATH.into()
+        // SHADER_ASSET_PATH.into()
     }
 
     fn vertex_shader() -> ShaderRef {
-        // DEBUG_SHADER_ASSET_PATH.into()
-        SHADER_ASSET_PATH.into()
+        DEBUG_SHADER_ASSET_PATH.into()
+        // SHADER_ASSET_PATH.into()
     }
 }
 
@@ -52,15 +52,23 @@ fn scena_setup(
     mut shader_materials: ResMut<Assets<WithShaderMaterial>>,
     mut standard_materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // standard materilas
     // commands.spawn((
     //     Mesh3d(meshes.add(Circle::new(4.0))),
-    //     MeshMaterial3d(materials.add(tailwind::EMERALD_700.into())),
+    //     MeshMaterial3d(standard_materials.add(Color::from(tailwind::ZINC_700))),
     //     Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
     // ));
+    // commands.spawn((
+    //     Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+    //     MeshMaterial3d(standard_materials.add(Color::from(tailwind::EMERALD_700))),
+    //     Transform::from_xyz(0.0, 0.5, 0.0),
+    // ));
 
+    // custom materilas
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(standard_materials.add(Color::from(tailwind::ZINC_700))),
+        Mesh3d(meshes.add(Sphere::new(1.).mesh().uv(64, 64))),
+        // MeshMaterial3d(shader_materials.add()),
+        MeshMaterial3d(standard_materials.add(Color::from(tailwind::EMERALD_700))),
         Transform::from_xyz(0.0, 0.5, 0.0),
     ));
 
@@ -98,10 +106,10 @@ mod camera_plugin {
         let mut direction = Vec3::ZERO;
 
         if input.pressed(KeyCode::KeyW) {
-            direction += Vec3::new(0., 0., 1.);
+            direction += Vec3::new(0., 0., -1.);
         }
         if input.pressed(KeyCode::KeyS) {
-            direction += Vec3::new(0., 0., -1.);
+            direction += Vec3::new(0., 0., 1.);
         }
         if input.pressed(KeyCode::KeyA) {
             direction += Vec3::new(-1., 0., 0.);
@@ -117,9 +125,7 @@ mod camera_plugin {
         }
 
         if direction != Vec3::ZERO {
-            info!("direction: {}", direction);
             let direction = direction.normalize();
-            Transform::from_translation(camera.0.translation);
             camera.0.translation += direction * move_speed * dt;
         }
 
