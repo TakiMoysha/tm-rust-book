@@ -6,10 +6,11 @@ use bevy::render::render_resource::AsBindGroup;
 use bevy::shader::ShaderRef;
 
 const SHADER_PATH: &str = "shaders/seascape.wgsl";
-// const SHADER_PATH: &str = "shaders/simple.wgsl";
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct WithShaderMaterial {}
+struct WithShaderMaterial {
+    pub color: Color,
+}
 
 impl Material for WithShaderMaterial {
     fn fragment_shader() -> ShaderRef {
@@ -51,7 +52,9 @@ fn scena_setup(
 ) {
     commands.spawn((
         Mesh3d(meshes.add(Sphere::new(1.).mesh().uv(64, 64))),
-        MeshMaterial3d(shader_materials.add(WithShaderMaterial {})),
+        MeshMaterial3d(shader_materials.add(WithShaderMaterial {
+            color: tailwind::CYAN_700.into(),
+        })),
         Transform::from_xyz(0.0, 0.5, 0.0),
     ));
 }

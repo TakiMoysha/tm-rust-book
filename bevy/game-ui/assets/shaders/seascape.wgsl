@@ -65,27 +65,15 @@ fn getSeaFromUV(uv: vec2<f32>, time: f32) -> vec3<f32> {
     return color;
 }
 
-struct VertexOutput {
+struct FragmentInput {
     @builtin(position) position: vec4<f32>,
-    @location(0) uv: vec2<f32>,
-    @location(1) normal: vec3<f32>,
-};
-
-@vertex
-fn vertex_main(
-    @location(0) position: vec3<f32>,
+    @location(0) world_position: vec3<f32>,
     @location(1) normal: vec3<f32>,
     @location(2) uv: vec2<f32>,
-) -> VertexOutput {
-    var out: VertexOutput;
-    out.position = vec4<f32>(position, 1.0);
-    out.uv = uv;
-    out.normal = normal;
-    return out;
-}
+};
 
 @fragment
-fn main(in: VertexOutput) -> @location(0) vec4<f32> {
+fn main(in: FragmentInput) -> @location(0) vec4<f32> {
     var color = getSeaFromUV(in.uv, 1.0);
     return vec4<f32>(color, 1.0);
 }
