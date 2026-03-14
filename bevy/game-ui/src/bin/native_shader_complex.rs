@@ -5,22 +5,20 @@ use bevy::reflect::TypePath;
 use bevy::render::render_resource::AsBindGroup;
 use bevy::shader::ShaderRef;
 
-const DEBUG_SHADER_ASSET_PATH: &str = "shaders/simple.wgsl";
-const SHADER_ASSET_PATH: &str = "shaders/seascape.wgsl";
+const SHADER_PATH: &str = "shaders/seascape.wgsl";
+// const SHADER_PATH: &str = "shaders/simple.wgsl";
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 struct WithShaderMaterial {}
 
 impl Material for WithShaderMaterial {
     fn fragment_shader() -> ShaderRef {
-        DEBUG_SHADER_ASSET_PATH.into()
-        // SHADER_ASSET_PATH.into()
+        SHADER_PATH.into()
     }
 
-    fn vertex_shader() -> ShaderRef {
-        DEBUG_SHADER_ASSET_PATH.into()
-        // SHADER_ASSET_PATH.into()
-    }
+    // fn vertex_shader() -> ShaderRef {
+    //     SHADER_PATH.into()
+    // }
 }
 
 fn main() {
@@ -50,32 +48,12 @@ fn scena_setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut shader_materials: ResMut<Assets<WithShaderMaterial>>,
-    mut standard_materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // standard materilas
-    // commands.spawn((
-    //     Mesh3d(meshes.add(Circle::new(4.0))),
-    //     MeshMaterial3d(standard_materials.add(Color::from(tailwind::ZINC_700))),
-    //     Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
-    // ));
-    // commands.spawn((
-    //     Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-    //     MeshMaterial3d(standard_materials.add(Color::from(tailwind::EMERALD_700))),
-    //     Transform::from_xyz(0.0, 0.5, 0.0),
-    // ));
-
-    // custom materilas
     commands.spawn((
         Mesh3d(meshes.add(Sphere::new(1.).mesh().uv(64, 64))),
-        // MeshMaterial3d(shader_materials.add()),
-        MeshMaterial3d(standard_materials.add(Color::from(tailwind::EMERALD_700))),
+        MeshMaterial3d(shader_materials.add(WithShaderMaterial {})),
         Transform::from_xyz(0.0, 0.5, 0.0),
     ));
-
-    commands.spawn(DirectionalLight {
-        shadows_enabled: true,
-        ..default()
-    });
 }
 
 mod camera_plugin {
@@ -91,6 +69,8 @@ mod camera_plugin {
             BootstrapCamera3d,
             Transform::from_xyz(-2.4, 3., 9.).looking_at(Vec3::ZERO, Vec3::Y),
         ));
+
+        commands.spawn((DirectionalLight::default(), Transform::from_xyz(0., 3., 3.)));
     }
 
     fn camera_behavior(
@@ -98,6 +78,7 @@ mod camera_plugin {
         input: Res<ButtonInput<KeyCode>>,
         mut mouse_motion: MessageReader<MouseMotion>,
         mut camera: Single<(&mut Transform, &BootstrapCamera3d)>,
+        // mut light: Single<(&mut Transform, &DirectionalLight)>,
     ) {
         let dt = time.delta_secs();
         let mouse_sensitivity = Vec2::new(0.12, 0.1);
@@ -138,6 +119,8 @@ mod camera_plugin {
             // let rotation = yaw * pitch;
             // let mut transform = camera.single_mut();
         }
+        // let light_direction = light.0.translation.normalize_or(Vec3::ZERO);
+        // light.0.looking_at(Vec3::ZERO, Vec3::ONE);
     }
 
     pub struct BootstrapCamera3dPlugin;
