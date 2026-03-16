@@ -1,15 +1,16 @@
 cargo-features = ["codegen-backend"]
 
 [package]
-name = "game-ui"
+name = "playground"
 version = "0.1.0"
 edition = "2024"
 
 [workspace]
 resolver = "3"
-# members = ["crates/*"]
+members = ["crates/*"]
 
 [dependencies]
+clap = { version = "4.5.60", features = ["cargo"] }
 bevy = { version = "0.18.1", default-features = false, features = [
   "ui",
   "std",
@@ -20,7 +21,8 @@ bevy = { version = "0.18.1", default-features = false, features = [
   "bevy_mesh",
 ] }
 bevy_input = "0.18.1"
-clap = { version = "4.5.60", features = ["cargo"] }
+bevy_rand = "0.14.2"
+rand = "0.10.0"
 
 [dev-dependencies]
 bevy_egui = "0.39.1"

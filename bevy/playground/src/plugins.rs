@@ -1,5 +1,6 @@
 pub mod scenes {
     use bevy::color::palettes::tailwind;
+    use bevy::image::ImageLoaderSettings;
     use bevy::prelude::*;
 
     pub struct DemoScena3dPlugin;
@@ -24,8 +25,14 @@ pub mod scenes {
         commands.spawn((
             Mesh3d(meshes.add(Plane3d::default().mesh().size(50., 50.))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: tailwind::EMERALD_400.info(),
-                base_color_texture: Some(asset_server.load("textures/dirt1.png")),
+                base_color: tailwind::EMERALD_100.into(),
+                perceptual_roughness: 0.95,
+                base_color_texture: Some(asset_server.load("textures/bricks1.png")),
+                normal_map_texture: Some(asset_server.load_with_settings(
+                    "textures/bricks1_normal.png",
+                    |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+                )),
+                alpha_mode: AlphaMode::Blend,
                 ..default()
             })),
             Ground,
@@ -36,14 +43,7 @@ pub mod scenes {
         ));
 
         let grid_material = materials.add(StandardMaterial {
-            base_color: tailwind::GRAY_400.into(),
-            alpha_mode: AlphaMode::Blend,
-            ..default()
-        });
-
-        let stone_material = materials.add(StandardMaterial {
-            base_color: Color::srgb(0.35, 0.35, 0.4),
-            perceptual_roughness: 0.95,
+            base_color: tailwind::AMBER_700.into(),
             ..default()
         });
 
@@ -58,10 +58,126 @@ pub mod scenes {
         }
 
         // ======================================================================
-        fill_scena(commands);
+        fill_scena(&mut commands, &mut meshes, &mut materials);
     }
 
-    pub fn fill_scena(mut commands: Commands) {}
+    pub fn fill_scena(
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+    ) {
+        let trunk_material = materials.add(StandardMaterial {
+            base_color: tailwind::ZINC_400.into(),
+            ..default()
+        });
+
+        let leaves_material = materials.add(StandardMaterial {
+            base_color: tailwind::GREEN_600.into(),
+            ..default()
+        });
+
+        let trunk_base_position = Vec3::new(-10., 0., -10.);
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.4, 2., 0.4))),
+            MeshMaterial3d(trunk_material),
+            Transform::from_xyz(
+                trunk_base_position.x,
+                trunk_base_position.y + 1.0,
+                trunk_base_position.z,
+            ),
+        ));
+
+        for i in 0..3 {
+            let scale = 1.0 - (i as f32 * 0.25);
+            let y_offset = 2.0 + (i as f32 * 1.0);
+            commands.spawn((
+                Mesh3d(meshes.add(Cone::new(1.4 * scale, 1.5))),
+                MeshMaterial3d(leaves_material.clone()),
+                Transform::from_xyz(
+                    trunk_base_position.x,
+                    trunk_base_position.y + y_offset,
+                    trunk_base_position.z,
+                ),
+            ));
+        }
+
+        // ===========================================================
+        let rock_base_position = vec3(15.1, 0.5, -15.);
+
+        let rock_material = materials.add(StandardMaterial {
+            base_color: tailwind::STONE_600.into(),
+            perceptual_roughness: 0.8,
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(meshes.add(Sphere::new(1.2).mesh().ico(1).unwrap())),
+            MeshMaterial3d(rock_material.clone()),
+            Transform::from_xyz(
+                rock_base_position.x,
+                rock_base_position.y,
+                rock_base_position.z,
+            )
+            .with_scale(vec3(1., 1.2, 2.)),
+        ));
+
+        for i in 0..3 {
+            let angle = (i as f32 / 3.0) * std::f32::consts::TAU;
+            let radius = 1.5;
+            let x = rock_base_position.x + angle.cos() * radius * 1.2;
+            let z = rock_base_position.z + angle.sin() * radius * 1.2;
+            let scale = 0.6 + (i as f32 * 0.2);
+
+            commands.spawn((
+                Mesh3d(meshes.add(Sphere::new(0.5).mesh().ico(1).unwrap())),
+                MeshMaterial3d(rock_material.clone()),
+                Transform::from_xyz(x, rock_base_position.y, z)
+                    .with_scale(vec3(scale, scale, scale)),
+            ));
+        }
+
+        // ===========================================================
+        let ore_base_position = Vec3::new(-10., 1., 10.);
+
+        let ore_material = materials.add(StandardMaterial {
+            base_color: tailwind::STONE_600.into(),
+            emissive: tailwind::ROSE_800.into(),
+            metallic: 0.8,
+            perceptual_roughness: 0.4,
+            ..default()
+        });
+
+        let stone_material = materials.add(StandardMaterial {
+            base_color: tailwind::STONE_900.into(),
+            perceptual_roughness: 0.95,
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.5, 1.0, 1.5))),
+            MeshMaterial3d(stone_material),
+            Transform::from_xyz(
+                ore_base_position.x,
+                ore_base_position.y + 0.5,
+                ore_base_position.z,
+            ),
+        ));
+
+        for i in 0..rand::random_range(2..8_i32) {
+            let angle = (i as f32 / 4.0) * std::f32::consts::TAU;
+            let offset = 0.4;
+            let x = ore_base_position.x + angle.cos() * offset;
+            let z = ore_base_position.y + angle.cos() * offset;
+
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(0.3, 0.4, 0.3))),
+                MeshMaterial3d(ore_material.clone()),
+                Transform::from_xyz(x, ore_base_position.y, z)
+                    .with_rotation(Quat::from_rotation_y(angle)),
+            ));
+        }
+    }
 
     // WIP: second camera (second viewport, like minimap or split screen)
     // #[derive(Component)]
@@ -115,42 +231,24 @@ pub mod cameras {
     }
 
     fn setup_camera(mut commands: Commands, mut camera_state: Option<ResMut<CameraState>>) {
-        if let Some(camera_state) = &mut camera_state {
-            camera_state.focus = Vec3::ZERO;
-            camera_state.radius = 30.0;
-            camera_state.pitch = -45.0f32.to_radians();
-            camera_state.yaw = 45.0f32.to_radians();
-            camera_state.is_orbiting = false;
-            camera_state.is_panning = false;
-        } else {
-            commands.insert_resource(CameraState {
-                focus: Vec3::ZERO,
-                radius: 30.0,
-                pitch: -45.0f32.to_radians(),
-                yaw: 45.0f32.to_radians(),
-                is_orbiting: false,
-                is_panning: false,
-            });
-        }
+        commands.insert_resource(CameraState {
+            focus: Vec3::ZERO,
+            radius: 0.0,
+            pitch: 0_f32.to_radians(),
+            yaw: 0_f32.to_radians(),
+            is_orbiting: false,
+            is_panning: false,
+        });
 
-        commands.spawn((
-            BootstrapCamera3d,
-            Transform::from_xyz(20.0, 20.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ));
+        let camera_init_position =
+            Transform::from_xyz(40.0, 40.0, 40.0).looking_at(Vec3::ZERO, Vec3::Y);
+        commands.spawn((BootstrapCamera3d, camera_init_position));
 
-        commands.spawn((
-            DirectionalLight {
-                illuminance: 1400.,
-                shadows_enabled: true,
-                ..default()
-            },
-            Transform::from_rotation(Quat::from_euler(
-                EulerRot::XYZ,
-                -45.0f32.to_radians(),
-                45.0f32.to_radians(),
-                0.0,
-            )),
-        ));
+        commands.spawn((DirectionalLight {
+            illuminance: 800.,
+            shadows_enabled: true,
+            ..default()
+        },));
     }
 
     fn camera_behavior(
@@ -203,8 +301,14 @@ pub mod cameras {
         // light.0.looking_at(Vec3::ZERO, Vec3::ONE);
     }
 
+    use bevy_input::mouse::MouseButtonInput;
+
+    #[derive(Debug, Resource)]
+    struct MousePressed(bool);
+
     pub fn mouse_button_input(
         mut camera_state: ResMut<CameraState>,
+        mut mouse_button_inputs: MessageReader<MouseButtonInput>,
         mouse_input: Res<ButtonInput<MouseButton>>,
         keys: Res<ButtonInput<KeyCode>>,
     ) {
@@ -221,7 +325,14 @@ pub mod cameras {
             camera_state.is_orbiting = false;
             camera_state.is_panning = false;
         }
+
+        for mouse_button_input in mouse_button_inputs.read() {
+            if mouse_button_input.button == MouseButton::Right {
+                // *mouse_pressed = MousePressed(mouse_button_input.state.is_pressed());
+            }
+        }
     }
+
     pub fn camera_controller(
         mut camera_query: Query<&mut Transform, With<BootstrapCamera3d>>,
         mut camera_state: ResMut<CameraState>,
@@ -229,7 +340,7 @@ pub mod cameras {
         accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
         keys: Res<ButtonInput<KeyCode>>,
     ) {
-        let sensitivity = 0.005;
+        let mouse_sensitivity = Vec2::new(0.12, 0.1);
         let zoom_sensitivity = 0.002;
         let pan_sensitivity = 0.01;
 
@@ -238,8 +349,8 @@ pub mod cameras {
 
         if camera_state.is_orbiting {
             // Orbit: change pitch and yaw
-            camera_state.yaw -= delta.x * sensitivity;
-            camera_state.pitch += delta.y * sensitivity;
+            camera_state.yaw -= delta.x * mouse_sensitivity.x;
+            camera_state.pitch += delta.y * mouse_sensitivity.x;
             // Clamp pitch to prevent flipping
             camera_state.pitch = camera_state
                 .pitch
@@ -260,15 +371,15 @@ pub mod cameras {
         }
 
         // Keyboard numpad for quick view alignment (like Blender)
-        if keys.just_pressed(KeyCode::Numpad1) {
+        if keys.just_pressed(KeyCode::Digit1) {
             camera_state.pitch = 0.0;
             camera_state.yaw = -90f32.to_radians(); // Front view
         }
-        if keys.just_pressed(KeyCode::Numpad3) {
+        if keys.just_pressed(KeyCode::Digit2) {
             camera_state.pitch = 0.0;
             camera_state.yaw = 0.0; // Right view
         }
-        if keys.just_pressed(KeyCode::Numpad7) {
+        if keys.just_pressed(KeyCode::Digit3) {
             camera_state.pitch = 90f32.to_radians();
             camera_state.yaw = 0.0; // Top view
         }
@@ -290,13 +401,14 @@ pub mod cameras {
 
     impl Plugin for BootstrapCamera3dPlugin {
         fn build(&self, app: &mut App) {
-            app.add_systems(Startup, setup_camera)
-                .add_systems(Update, (
+            app.add_systems(Startup, setup_camera).add_systems(
+                Update,
+                (
                     camera_behavior,
-                    // camera_controller,
-                    // mouse_button_input,
-                ))
-            ;
+                    mouse_button_input,
+                    camera_controller,
+                ),
+            );
         }
     }
 }

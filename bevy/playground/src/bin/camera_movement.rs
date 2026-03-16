@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use game_ui::plugins;
+use playground::plugins;
 
 fn main() {
     let _matches = clap::command!()
