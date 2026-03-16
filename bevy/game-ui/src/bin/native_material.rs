@@ -1,25 +1,42 @@
 use bevy::color::palettes::tailwind;
-use bevy::math::VectorSpace;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
-use bevy::render::render_resource::AsBindGroup;
+use bevy::render::render_resource::{AsBindGroup, ShaderType};
 use bevy::shader::ShaderRef;
 
-const SHADER_PATH: &str = "shaders/seascape.wgsl";
+const MATERIAL_SHADER_PATH: &str = "shaders/seascape.wgsl";
+const MATERIAL_TEXTURE_PATH: &str = "textures/bricks1.png";
+
+#[derive(ShaderType, Debug, Clone)]
+struct MaterialParams {
+    pub time_offset: f32,
+    pub color: LinearRgba,
+}
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 struct WithShaderMaterial {
-    pub color: Color,
+    alpha_mode: AlphaMode,
+
+    #[uniform(0)]
+    pub params: MaterialParams,
+
+    #[texture(2)]
+    #[sampler(3)]
+    color_texture: Option<Handle<Image>>,
 }
 
 impl Material for WithShaderMaterial {
     fn fragment_shader() -> ShaderRef {
-        SHADER_PATH.into()
+        MATERIAL_SHADER_PATH.into()
     }
 
-    // fn vertex_shader() -> ShaderRef {
-    //     SHADER_PATH.into()
-    // }
+    fn vertex_shader() -> ShaderRef {
+        MATERIAL_SHADER_PATH.into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode {
+        self.alpha_mode
+    }
 }
 
 fn main() {
@@ -34,7 +51,7 @@ fn main() {
             camera_plugin::BootstrapCamera3dPlugin,
         ))
         .add_systems(Startup, scena_setup)
-        .add_systems(Update, rotate_object)
+        .add_systems(Update, (rotate_object, render_materials))
         .run();
 }
 
@@ -45,17 +62,39 @@ fn rotate_object(mut query: Query<&mut Transform, With<Mesh3d>>) {
     }
 }
 
+fn render_materials(time: Res<Time>, mut custom_material: ResMut<Assets<WithShaderMaterial>>) {
+    for material in custom_material.iter_mut() {
+        material.1.params.time_offset += time.delta_secs();
+    }
+}
+
 fn scena_setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut shader_materials: ResMut<Assets<WithShaderMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
     commands.spawn((
         Mesh3d(meshes.add(Sphere::new(1.).mesh().uv(64, 64))),
         MeshMaterial3d(shader_materials.add(WithShaderMaterial {
-            color: tailwind::CYAN_700.into(),
+            params: MaterialParams {
+                time_offset: 0.,
+                color: tailwind::AMBER_100.into(),
+            },
+            color_texture: Some(asset_server.load(MATERIAL_TEXTURE_PATH)),
+            alpha_mode: AlphaMode::Blend,
         })),
         Transform::from_xyz(0.0, 0.5, 0.0),
+    ));
+
+    commands.spawn((
+        Text::new(""),
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(10.),
+            left: px(10.),
+            ..default()
+        },
     ));
 }
 

@@ -13,6 +13,7 @@ resolver = "3"
 bevy = { version = "0.18.1", default-features = false, features = [
   "ui",
   "std",
+  "bevy_pbr",
   "bevy_render",
   "bevy_shader",
   "bevy_mesh",
