@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
-mod game;
-mod ui;
+pub mod plugins;
 
 mod states {
     use bevy::prelude::States;
