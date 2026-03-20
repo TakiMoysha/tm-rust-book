@@ -1,3 +1,5 @@
+pub mod editor;
+
 pub mod scenes {
     use bevy::color::palettes::tailwind;
     use bevy::image::ImageLoaderSettings;
@@ -36,10 +38,6 @@ pub mod scenes {
                 ..default()
             })),
             Ground,
-        ));
-        commands.spawn((
-            DirectionalLight::default(),
-            Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
         ));
 
         let grid_material = materials.add(StandardMaterial {
@@ -212,13 +210,8 @@ pub mod scenes {
 }
 
 pub mod cameras {
-    use bevy::log::{error, info};
     use bevy::prelude::*;
-    use bevy_input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll, MouseMotion};
-
-    #[derive(Component)]
-    #[require(Camera3d)]
-    pub struct BootstrapCamera3d;
+    use bevy_input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll};
 
     #[derive(Resource, Debug, Default)]
     pub struct CameraState {
@@ -230,14 +223,14 @@ pub mod cameras {
         is_panning: bool,
     }
 
-    fn setup_camera(mut commands: Commands, mut camera_state: Option<ResMut<CameraState>>) {
+    #[derive(Component)]
+    #[require(Camera3d)]
+    pub struct BootstrapCamera3d;
+
+    fn setup_camera(mut commands: Commands) {
         commands.insert_resource(CameraState {
             focus: Vec3::ZERO,
-            radius: 0.0,
-            pitch: 0_f32.to_radians(),
-            yaw: 0_f32.to_radians(),
-            is_orbiting: false,
-            is_panning: false,
+            ..default()
         });
 
         let camera_init_position =
@@ -245,7 +238,7 @@ pub mod cameras {
         commands.spawn((BootstrapCamera3d, camera_init_position));
 
         commands.spawn((DirectionalLight {
-            illuminance: 800.,
+            illuminance: 1400.,
             shadows_enabled: true,
             ..default()
         },));
@@ -254,51 +247,41 @@ pub mod cameras {
     fn camera_behavior(
         time: Res<Time>,
         input: Res<ButtonInput<KeyCode>>,
-        mut mouse_motion: MessageReader<MouseMotion>,
-        mut camera: Single<(&mut Transform, &BootstrapCamera3d)>,
+        accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+        accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
+        mut main_camera: Single<(&mut Transform, &BootstrapCamera3d)>,
+        mut camera_state: Option<ResMut<CameraState>>,
         // mut light: Single<(&mut Transform, &DirectionalLight)>,
     ) {
         let dt = time.delta_secs();
         let mouse_sensitivity = Vec2::new(0.12, 0.1);
         let move_speed = 10.0;
 
-        let mut direction = Vec3::ZERO;
+        let mut cam_direction = Vec3::ZERO;
 
         if input.pressed(KeyCode::KeyW) {
-            direction += Vec3::new(0., 0., -1.);
+            cam_direction += Vec3::new(0., 0., 1.);
         }
         if input.pressed(KeyCode::KeyS) {
-            direction += Vec3::new(0., 0., 1.);
+            cam_direction += Vec3::new(0., 0., -1.);
         }
         if input.pressed(KeyCode::KeyA) {
-            direction += Vec3::new(-1., 0., 0.);
+            cam_direction += Vec3::new(-1., 0., 0.);
         }
         if input.pressed(KeyCode::KeyD) {
-            direction += Vec3::new(1., 0., 0.);
+            cam_direction += Vec3::new(1., 0., 0.);
         }
         if input.pressed(KeyCode::Space) {
-            direction += Vec3::new(0., 1., 0.);
+            cam_direction += Vec3::new(0., 1., 0.);
         }
         if input.pressed(KeyCode::KeyC) {
-            direction += Vec3::new(0., -1., 0.);
+            cam_direction += Vec3::new(0., -1., 0.);
         }
 
-        if direction != Vec3::ZERO {
-            let direction = direction.normalize();
-            camera.0.translation += direction * move_speed * dt;
+        if cam_direction != Vec3::ZERO {
+            let direction = cam_direction.normalize();
+            main_camera.0.translation += direction * move_speed * dt;
         }
-
-        for motion_event in mouse_motion.read() {
-            let delta_yaw = -motion_event.delta.x * dt * mouse_sensitivity.x;
-            let delta_pitch = -motion_event.delta.y * dt * mouse_sensitivity.y;
-            // let delta = Vec2::new(delta.x, delta.y) * mouse_sensitivity;
-            // let yaw = Quat::from_rotation_y(-delta.x);
-            // let pitch = Quat::from_rotation_x(-delta.y);
-            // let rotation = yaw * pitch;
-            // let mut transform = camera.single_mut();
-        }
-        // let light_direction = light.0.translation.normalize_or(Vec3::ZERO);
-        // light.0.looking_at(Vec3::ZERO, Vec3::ONE);
     }
 
     use bevy_input::mouse::MouseButtonInput;
@@ -405,8 +388,8 @@ pub mod cameras {
                 Update,
                 (
                     camera_behavior,
-                    mouse_button_input,
-                    camera_controller,
+                    // mouse_button_input,
+                    // camera_controller
                 ),
             );
         }

@@ -22,10 +22,11 @@ bevy = { version = "0.18.1", default-features = false, features = [
 ] }
 bevy_input = "0.18.1"
 bevy_rand = "0.14.2"
+bevy_egui = "0.39.1"
 rand = "0.10.0"
+bevy_ecs = "0.18.1"
 
 [dev-dependencies]
-bevy_egui = "0.39.1"
 bevy-inspector-egui = "0.36.0"
 
 [features]
@@ -33,10 +34,10 @@ default = ["dev_native"]
 dev = ["bevy/dynamic_linking", "bevy/bevy_dev_tools", "bevy/bevy_ui_debug"]
 dev_native = [
   "dev",
-  "bevy/3d",               # debug
   "bevy/file_watcher",
   "bevy/embedded_watcher",
   "bevy/wayland",
+  "bevy/3d",               # debug
 ]
 
 [profile.dev]
