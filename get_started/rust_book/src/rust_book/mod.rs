@@ -1851,6 +1851,9 @@ mod tests {
         let total: i32 = v1.iter().sum();
         assert_eq!(total, 10);
 
+        let mut vector= vec![];
+        ['a', 'b', 'c'].iter().for_each(|v| vector.push(v));
+
         let mut sum = 0;
         v1.iter().for_each(|el| {
             sum = sum + el;

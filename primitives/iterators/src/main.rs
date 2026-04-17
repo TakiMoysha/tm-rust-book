@@ -33,6 +33,19 @@ mod base_iterators {
             assert_eq!(counter.next(), None);
         }
     }
+
+    pub fn demo_101() {
+        let file = File::open("foo.txt").expect("Failed to open file");
+        let lines = BufReader::new(file).lines();
+
+        let error = lines
+            .filter(|l| line.as_ref().map_or(false, |l| l.starts_with("ERR")))
+            .next();
+        ///
+        let nums = (1..10).collect();
+        let first_even = nums.iter().find(|x| x % 2 == 0);
+    }
+
 }
 
 mod fused_iterators {
