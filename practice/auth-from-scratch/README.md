@@ -10,3 +10,9 @@ OAUTH_PASSWORD=<YOUR_PASSWORD>
 ```
 - Run with `just` (just load the .env file) or copy command from justfile and run manually with appropriate `env` variables.
 
+
+## 
+
+### Session-based token authentication
+
+Session have an id and secret. 

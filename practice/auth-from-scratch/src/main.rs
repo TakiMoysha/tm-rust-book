@@ -1,5 +1,41 @@
 use reqwest::{self, Method, StatusCode, retry};
 
+mod storage {
+    use serde::{Serialize, de::DeserializeOwned};
+
+    trait StoreEntry: Serialize + DeserializeOwned {}
+    pub struct Entry<T: StoreEntry> {
+        key: String,
+        data: T,
+    }
+
+    pub fn save(key: String, data: String) {
+        todo!()
+    }
+
+    pub fn load<T: StoreEntry>(key: String) -> Option<T> {
+        todo!()
+    }
+}
+
+mod session {
+    use rand;
+    pub struct Session {
+        id: String,
+        secret_hash: Vec<u8>,
+        created_at: i64,
+    }
+    fn generate_secure_random_string() -> String {
+        let mut rng = rand::thread_rng();
+        let alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let mut random_string = String::with_capacity(32);
+        for _ in 0..32 {
+            random_string.push(alphabet[rng.gen_range(0..alphabet.len())] as char);
+        }
+        todo!();
+    }
+}
+
 static HOST: &str = "https://httpbin.org";
 const HTTP_USER_AGENT: &str = "reqwest/0.10.8";
 
