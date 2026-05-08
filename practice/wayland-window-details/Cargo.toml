@@ -1,0 +1,11 @@
+[package]
+name = "wayland-window-details"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+obws = "0.15.0"
+swayipc = "4.0.0"
+tokio = "1.52.3"
+wayland-client = "0.31.14"
+wayland-protocols = { version = "0.32.12", features = ["unstable"] }
