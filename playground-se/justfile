@@ -1,4 +1,0 @@
-set dotenv-load
-
-dev:
-    cargo run dev

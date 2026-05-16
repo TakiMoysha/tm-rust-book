@@ -1,0 +1,4 @@
+[env]
+_.file = { path = ".env" }
+GAME_DIR = { required = true }  # /full/path/to/steam/steamapps/common/SpaceEnginners
+SDK_DIR = { required = true }   # /full/path/to/steam/steamapps/common/SpaceEnginnersModSDK
