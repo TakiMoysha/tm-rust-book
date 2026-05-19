@@ -58,7 +58,7 @@ pub fn glob_sbc(dir: &PathBuf) -> anyhow::Result<Vec<PathBuf>> {
     Ok(sbc_files)
 }
 
-pub fn parse_sbc_file(path: &PathBuf) -> anyhow::Result<Vec<types::Definition>> {
+pub fn parse_sbc_definitions(path: &PathBuf) -> anyhow::Result<Vec<types::Definition>> {
     let content = read_to_string(path).context("failed to read file")?;
     let sbc_definitions = types::parse_sbc(&content)?;
     Ok(sbc_definitions.cube_blocks.definitions)
