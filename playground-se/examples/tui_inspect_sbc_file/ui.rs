@@ -29,12 +29,10 @@ pub fn draw(frame: &mut Frame, app: &App) {
         draw_empty(frame, app, chunks[1]);
     }
 
-    // TODO: added focus on popup
-    // if app.msg.is_some() {
-    //     if let Some(content) = &app.msg {
-    //         draw_popup(frame, content, " Popup ");
-    //     }
-    // }
+    // Draw suggestions popup if active
+    if app.show_suggestions {
+        draw_suggestions_popup(frame, app);
+    }
 
     // Footer with help
     draw_footer(frame, app, chunks[2]);
@@ -194,9 +192,13 @@ fn draw_empty(frame: &mut Frame, _app: &App, area: Rect) {
 }
 
 fn draw_footer(frame: &mut Frame, app: &App, area: Rect) {
-    let help_text = match app.input_mode {
-        InputMode::Normal => "i:insert | j/↓:down | k/↑:up | g:first | G:last | r:reload | q:quit",
-        InputMode::Insert => "Esc:normal | Enter:load | ←/→:move | Home:start | End:end",
+    let help_text = if app.show_suggestions {
+        "Tab:complete | ↑↓:navigate | Enter:accept | Right:enter dir | Esc:cancel"
+    } else {
+        match app.input_mode {
+            InputMode::Normal => "i:insert | j/↓:down | k/↑:up | g:first | G:last | r:reload | q:quit",
+            InputMode::Insert => "Tab:suggest | Enter:load | ←/→:move | Home:start | End:end | Esc:normal",
+        }
     };
 
     let footer = Paragraph::new(help_text)
@@ -204,6 +206,83 @@ fn draw_footer(frame: &mut Frame, app: &App, area: Rect) {
         .alignment(ratatui::layout::Alignment::Center);
 
     frame.render_widget(footer, area);
+}
+
+/// Draw suggestions float popup
+fn draw_suggestions_popup(frame: &mut Frame, app: &App) {
+    let area = frame.area();
+    // Fixed size: 70% width, 70% height
+    let popup_area = centered_rect(70, 70, area);
+
+    // Clear background
+    frame.render_widget(Clear, popup_area);
+
+    // Split popup into input and list areas
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(3), Constraint::Min(0)])
+        .split(popup_area);
+
+    // Input area at top of popup
+    let input_text = app.suggestion_input.clone();
+    let input = Paragraph::new(input_text)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" Path ")
+                .border_style(Style::default().fg(Color::Yellow)),
+        )
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(input, chunks[0]);
+
+    // Suggestions list
+    if app.suggestions.is_empty() {
+        let empty_text = Paragraph::new("No matches")
+            .style(Style::default().fg(Color::Gray))
+            .block(Block::default().borders(Borders::ALL));
+        frame.render_widget(empty_text, chunks[1]);
+    } else {
+        let items: Vec<ListItem> = app
+            .suggestions
+            .iter()
+            .enumerate()
+            .map(|(idx, item)| {
+                let icon = if item.is_dir { "📁" } else { "📄" };
+                let style = if idx == app.selected_suggestion {
+                    Style::default().bg(Color::Blue).fg(Color::White).add_modifier(Modifier::BOLD)
+                } else if item.is_sbc {
+                    Style::default().fg(Color::Green)
+                } else if item.is_dir {
+                    Style::default().fg(Color::Cyan)
+                } else {
+                    Style::default()
+                };
+                
+                let text = format!("{} {}", icon, item.name);
+                ListItem::new(text).style(style)
+            })
+            .collect();
+
+        let list = List::new(items)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(format!(" {} items ", app.suggestions.len())),
+            )
+            .highlight_symbol("> ");
+
+        // Create mutable state for the selected item
+        let mut list_state = ratatui::widgets::ListState::default();
+        list_state.select(Some(app.selected_suggestion));
+        
+        frame.render_stateful_widget(list, chunks[1], &mut list_state);
+    }
+
+    // Set cursor in the input field
+    let cursor_x = popup_area.x + 1 + app.suggestion_input.len() as u16;
+    let cursor_y = popup_area.y + 1;
+    frame.set_cursor_position((cursor_x, cursor_y));
 }
 
 /// Draw a popup for detailed view (optional)

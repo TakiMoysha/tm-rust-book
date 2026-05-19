@@ -10,3 +10,8 @@ Protobuf (.sbcPB)
 .mwm файлы
 Использует MyModel.LoadModelData() из VRage.Import . Это проприетарный бинарный формат Keen Software House без публичной спецификации.
 
+### TUI (sbc-inspector-cli)
+
+Небольшоая TUI для работы с sbc-файлами.
+
+- продолжить на layout [layouts tutorial / ratatui.rs](https://ratatui.rs/tutorials/json-editor/ui/)

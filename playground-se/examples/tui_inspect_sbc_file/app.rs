@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use ratatui::widgets::ListState;
 
@@ -20,6 +21,20 @@ pub struct App {
     pub msg: Option<String>,
     pub list_state: ListState,
     pub should_quit: bool,
+
+    // Float suggestions window state
+    pub show_suggestions: bool,
+    pub suggestions: Vec<SuggestionItem>,
+    pub selected_suggestion: usize,
+    pub suggestion_input: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct SuggestionItem {
+    pub name: String,
+    pub is_dir: bool,
+    pub is_sbc: bool,
+    pub full_path: PathBuf,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -31,10 +46,7 @@ pub enum InputMode {
 
 impl App {
     pub fn new() -> Self {
-        Self {
-            msg: Some("Hello world!".into()),
-            ..Self::default()
-        }
+        Self { ..Self::default() }
     }
 
     pub fn with_file(path: &str) -> Self {
@@ -167,5 +179,135 @@ impl App {
 
     pub fn quit(&mut self) {
         self.should_quit = true;
+    }
+
+    // === Suggestions float window methods ===
+
+    /// Open suggestions window
+    pub fn open_suggestions(&mut self) {
+        self.show_suggestions = true;
+        self.suggestion_input.clone_from(&self.file_path);
+        self.selected_suggestion = 0;
+        self.refresh_suggestions();
+    }
+
+    /// Close suggestions window without applying
+    pub fn close_suggestions(&mut self) {
+        self.show_suggestions = false;
+        self.suggestions.clear();
+        self.selected_suggestion = 0;
+    }
+
+    /// Apply selected suggestion and close
+    pub fn accept_suggestion(&mut self) {
+        if let Some(item) = self.suggestions.get(self.selected_suggestion) {
+            self.suggestion_input = item.full_path.to_string_lossy().to_string();
+        }
+        self.file_path.clone_from(&self.suggestion_input);
+        self.cursor_position = self.file_path.len();
+        self.close_suggestions();
+        self.enter_normal_mode();
+    }
+
+    /// Refresh suggestions based on current input
+    pub fn refresh_suggestions(&mut self) {
+        self.suggestions.clear();
+        self.selected_suggestion = 0;
+
+        let path = Path::new(&self.suggestion_input);
+        let (dir_to_read, prefix) = if self.suggestion_input.is_empty() {
+            (PathBuf::from("."), String::new())
+        } else if path.is_dir() && self.suggestion_input.ends_with('/') {
+            (path.to_path_buf(), String::new())
+        } else {
+            let parent = path.parent().unwrap_or(Path::new("."));
+            let file_name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default();
+            (parent.to_path_buf(), file_name)
+        };
+
+        if let Ok(entries) = fs::read_dir(&dir_to_read) {
+            let mut items: Vec<SuggestionItem> = entries
+                .filter_map(|entry| {
+                    let entry = entry.ok()?;
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let is_dir = entry.file_type().ok()?.is_dir();
+                    let is_sbc = !is_dir && name.ends_with(".sbc");
+
+                    // Skip hidden files
+                    if name.starts_with('.') {
+                        return None;
+                    }
+
+                    // Filter by prefix if any
+                    if !prefix.is_empty()
+                        && !name.to_lowercase().starts_with(&prefix.to_lowercase())
+                    {
+                        return None;
+                    }
+
+                    let full_path = if dir_to_read == Path::new(".") {
+                        entry.path()
+                    } else {
+                        dir_to_read.join(entry.file_name())
+                    };
+
+                    Some(SuggestionItem {
+                        name: if is_dir { format!("{}/", name) } else { name },
+                        is_dir,
+                        is_sbc,
+                        full_path,
+                    })
+                })
+                .collect();
+
+            // Sort: directories first, then alphabetically
+            items.sort_by(|a, b| match (a.is_dir, b.is_dir) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => a.name.cmp(&b.name),
+            });
+
+            self.suggestions = items;
+        }
+    }
+
+    /// Navigate down in suggestions
+    pub fn select_next_suggestion(&mut self) {
+        if !self.suggestions.is_empty() {
+            self.selected_suggestion =
+                (self.selected_suggestion + 1).min(self.suggestions.len() - 1);
+        }
+    }
+
+    /// Navigate up in suggestions
+    pub fn select_prev_suggestion(&mut self) {
+        self.selected_suggestion = self.selected_suggestion.saturating_sub(1);
+    }
+
+    /// Update suggestion input from char
+    pub fn suggestion_insert_char(&mut self, c: char) {
+        self.suggestion_input.push(c);
+        self.refresh_suggestions();
+    }
+
+    /// Backspace in suggestions
+    pub fn suggestion_backspace(&mut self) {
+        if !self.suggestion_input.is_empty() {
+            self.suggestion_input.pop();
+            self.refresh_suggestions();
+        }
+    }
+
+    /// Navigate into selected directory
+    pub fn suggestion_enter_dir(&mut self) {
+        if let Some(item) = self.suggestions.get(self.selected_suggestion) {
+            if item.is_dir {
+                self.suggestion_input = format!("{}/", item.full_path.to_string_lossy());
+                self.refresh_suggestions();
+            }
+        }
     }
 }

@@ -104,9 +104,15 @@ fn handle_normal_mode(app: &mut App, code: KeyCode, _modifiers: KeyModifiers) {
 }
 
 fn handle_insert_mode(app: &mut App, code: KeyCode, _modifiers: KeyModifiers) {
+    if app.show_suggestions {
+        handle_suggestions_mode(app, code);
+        return;
+    }
+
     match code {
         KeyCode::Esc => app.enter_normal_mode(),
         KeyCode::Enter => app.enter_normal_mode(),
+        KeyCode::Tab => app.open_suggestions(),
         KeyCode::Char(c) => app.insert_char(c),
         KeyCode::Backspace => app.backspace(),
         KeyCode::Delete => app.delete_char(),
@@ -114,6 +120,20 @@ fn handle_insert_mode(app: &mut App, code: KeyCode, _modifiers: KeyModifiers) {
         KeyCode::Right => app.move_cursor_right(),
         KeyCode::Home => app.move_cursor_start(),
         KeyCode::End => app.move_cursor_end(),
-        _ => app.notify("Unsupported key in insert mode"),
+        _ => {}
+    }
+}
+
+fn handle_suggestions_mode(app: &mut App, code: KeyCode) {
+    match code {
+        KeyCode::Esc => app.close_suggestions(),
+        KeyCode::Enter => app.accept_suggestion(),
+        KeyCode::Tab => app.select_next_suggestion(),
+        KeyCode::Down => app.select_next_suggestion(),
+        KeyCode::Up => app.select_prev_suggestion(),
+        KeyCode::Right => app.suggestion_enter_dir(),
+        KeyCode::Char(c) => app.suggestion_insert_char(c),
+        KeyCode::Backspace => app.suggestion_backspace(),
+        _ => {}
     }
 }
