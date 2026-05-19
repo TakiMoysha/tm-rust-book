@@ -1,0 +1,9 @@
+[package]
+name = "consistent-memory-agent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+cersei = { git = "https://github.com/pacifio/cersei" }
+tokio = { version = "1", features = ["full"] }
