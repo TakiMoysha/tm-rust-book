@@ -1,6 +1,6 @@
 use quick_xml::DeError;
 use quick_xml::de::from_str;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -29,19 +29,19 @@ impl From<std::io::Error> for DefinitionParseError {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Definitions {
     #[serde(rename = "CubeBlocks")]
     pub cube_blocks: CubeBlocks,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CubeBlocks {
     #[serde(rename = "Definition", default)]
     pub definitions: Vec<Definition>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Definition {
     #[serde(rename = "Id")]
     pub id: BlockId,
@@ -109,7 +109,7 @@ pub struct Definition {
     pub model: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BlockId {
     #[serde(rename = "TypeId")]
     pub type_id: String,
@@ -117,7 +117,7 @@ pub struct BlockId {
     pub subtype_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Size {
     #[serde(rename = "@x")]
     pub x: i32,
@@ -127,7 +127,7 @@ pub struct Size {
     pub z: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Coords {
     #[serde(rename = "@x")]
     pub x: f32,
@@ -137,7 +137,7 @@ pub struct Coords {
     pub z: f32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CubeDefinition {
     #[serde(rename = "CubeTopology")]
     pub cube_topology: String,
@@ -147,13 +147,13 @@ pub struct CubeDefinition {
     pub sides: Sides,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Sides {
     #[serde(rename = "Side", default)]
     pub sides: Vec<Side>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Side {
     #[serde(rename = "@Model")]
     pub model: String,
@@ -163,13 +163,13 @@ pub struct Side {
     pub pattern_width: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BuildProgressModels {
     #[serde(rename = "Model", default)]
     pub models: Vec<BuildProgressModel>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BuildProgressModel {
     #[serde(rename = "@BuildPercentUpperBound")]
     pub build_percent_upper_bound: f32,
@@ -177,13 +177,13 @@ pub struct BuildProgressModel {
     pub file: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MountPoints {
     #[serde(rename = "MountPoint", default)]
     pub mount_points: Vec<MountPoint>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MountPoint {
     #[serde(rename = "@EndX")]
     pub end_x: f32,
@@ -197,13 +197,13 @@ pub struct MountPoint {
     pub start_y: f32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Components {
     #[serde(rename = "Component", default)]
     pub components: Vec<Component>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Component {
     #[serde(rename = "@Count")]
     pub count: i32,
@@ -211,7 +211,7 @@ pub struct Component {
     pub subtype: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CriticalComponent {
     #[serde(rename = "@Index")]
     pub index: i32,
@@ -219,13 +219,13 @@ pub struct CriticalComponent {
     pub subtype: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Skeleton {
     #[serde(rename = "BoneInfo", default)]
     pub bone_infos: Vec<BoneInfo>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BoneInfo {
     #[serde(rename = "BonePosition")]
     pub bone_position: Coords,
@@ -237,4 +237,3 @@ pub fn parse_sbc(content: &str) -> Result<Definitions, DefinitionParseError> {
     let definitions: Definitions = from_str(content)?;
     Ok(definitions)
 }
-

@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::Context;
 
-use playground_se::sbc;
+use playground_se::types;
 
 fn main() -> anyhow::Result<()> {
     let gamedir = env::var("GAME_DIR")
@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
         origin_content_dir.display()
     );
 
-    let sbc_files: Vec<_> = fs::read_dir(data_content_dir)
+    let sbc_files: Vec<_> = fs::read_dir(data_content_dir.clone())
         .expect("failed to read data dir")
         .filter_map(|entry| {
             if let Ok(e) = entry {
@@ -48,23 +48,26 @@ fn main() -> anyhow::Result<()> {
         })
         .collect();
 
-    if !sbc_files.is_empty() {
-        let content = read_to_string(&sbc_files[0]).context("failed to read file")?;
+    if sbc_files.is_empty() {
+        println!("No SBC files found in {:?}", data_content_dir);
+        return Ok(());
+    }
 
-        let definitions = sbc::parse_sbc(&content)?.cube_blocks.definitions;
-        println!(
-            "\nParsed {} definitions from {}",
-            definitions.len(),
-            sbc_files[0].display()
-        );
-        println!("---\n");
-        for (i, def) in definitions.iter().enumerate() {
-            println!("\n--- Definition {} ---", i + 1);
-            println!("ID: {:?}", def.id);
-            println!("DisplayName: {}", def.display_name);
-            println!("CubeSize: {}", def.cube_size);
-            println!("Size: {:?}", def.size);
-        }
+    let content = read_to_string(&sbc_files[0]).context("failed to read file")?;
+
+    let definitions = types::parse_sbc(&content)?.cube_blocks.definitions;
+    println!(
+        "\nParsed {} definitions from {}",
+        definitions.len(),
+        sbc_files[0].display()
+    );
+    println!("---\n");
+    for (i, def) in definitions.iter().enumerate() {
+        println!("\n--- Definition {} ---", i + 1);
+        println!("ID: {:?}", def.id);
+        println!("DisplayName: {}", def.display_name);
+        println!("CubeSize: {}", def.cube_size);
+        println!("Size: {:?}", def.size);
     }
 
     Ok(())
@@ -79,7 +82,7 @@ mod test {
         let example_file = Path::new("tmp/example.sbc");
 
         if let Ok(content) = read_to_string(example_file) {
-            let definitions = sbc::parse_sbc(&content);
+            let definitions = types::parse_sbc(&content);
             assert!(definitions.is_ok(), "Failed to parse example.sbc");
 
             println!("Successfully parsed {:?} definitions", definitions.as_ref());
