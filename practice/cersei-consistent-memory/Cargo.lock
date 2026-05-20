@@ -145,7 +145,6 @@ checksum = "4f4c707c6a209cbe82d10abd08e1ea8995e9ea937d2550646e02798948992be0"
 [[package]]
 name = "cersei"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -176,7 +175,6 @@ dependencies = [
 [[package]]
 name = "cersei-agent"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -203,7 +201,6 @@ dependencies = [
 [[package]]
 name = "cersei-compression"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "anyhow",
  "once_cell",
@@ -217,7 +214,6 @@ dependencies = [
 [[package]]
 name = "cersei-embeddings"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "async-trait",
  "futures",
@@ -233,7 +229,6 @@ dependencies = [
 [[package]]
 name = "cersei-hooks"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "async-trait",
  "cersei-types",
@@ -245,7 +240,6 @@ dependencies = [
 [[package]]
 name = "cersei-lsp"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "dashmap",
  "serde",
@@ -259,7 +253,6 @@ dependencies = [
 [[package]]
 name = "cersei-mcp"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "async-trait",
  "cersei-types",
@@ -273,7 +266,6 @@ dependencies = [
 [[package]]
 name = "cersei-memory"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "async-trait",
  "cersei-types",
@@ -291,7 +283,6 @@ dependencies = [
 [[package]]
 name = "cersei-provider"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "async-trait",
  "base64",
@@ -310,7 +301,6 @@ dependencies = [
 [[package]]
 name = "cersei-tools"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "async-trait",
  "base64",
@@ -351,7 +341,6 @@ dependencies = [
 [[package]]
 name = "cersei-tools-derive"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -361,7 +350,6 @@ dependencies = [
 [[package]]
 name = "cersei-types"
 version = "0.1.8"
-source = "git+https://github.com/pacifio/cersei#8e93da2990a73402428e5dab173cda37b56c8cbe"
 dependencies = [
  "anyhow",
  "chrono",
@@ -441,6 +429,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cersei",
+ "markdown",
+ "serde",
  "tokio",
 ]
 
@@ -1438,6 +1428,15 @@ name = "mac"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
+
+[[package]]
+name = "markdown"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5cab8f2cadc416a82d2e783a1946388b31654d391d1c7d92cc1f03e295b1deb"
+dependencies = [
+ "unicode-id",
+]
 
 [[package]]
 name = "markup5ever"
@@ -2933,6 +2932,12 @@ name = "typenum"
 version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
+
+[[package]]
+name = "unicode-id"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70ba288e709927c043cbe476718d37be306be53fb1fafecd0dbe36d072be2580"
 
 [[package]]
 name = "unicode-ident"

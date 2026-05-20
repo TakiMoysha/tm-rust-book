@@ -3,7 +3,12 @@ name = "consistent-memory-agent"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "diff_between_commits"
+
 [dependencies]
 anyhow = "1"
-cersei = { git = "https://github.com/pacifio/cersei" }
+cersei = { path = "../../../../projects/cersei/crates/cersei" }
+markdown = "1.0.0"
+serde = "1.0.228"
 tokio = { version = "1", features = ["full"] }

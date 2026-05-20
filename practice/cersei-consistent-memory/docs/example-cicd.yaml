@@ -1,0 +1,39 @@
+# .github/workflows/memory-update.yml
+
+name: Update Memory on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  update-memory-context:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Call Memory Agent
+        run: |
+          curl -X POST http://localhost:8000/api/memory/update-from-pr \
+            -H "Content-Type: application/json" \
+            -d '{
+              "pr_branch": "${{ github.head_ref }}",
+              "base_branch": "${{ github.base_ref }}",
+              "diff": "${{ github.event.pull_request.diff_url }}",
+              "commit_sha": "${{ github.event.pull_request.head.sha }}"
+            }'
+
+      - name: Comment Results
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Post agent results as PR comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🧠 Memory Update Results\n\n' + agentResults
+            })
