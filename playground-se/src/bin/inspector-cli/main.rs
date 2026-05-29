@@ -1,5 +1,4 @@
 pub mod app;
-pub mod ui;
 
 use std::{
     io::{self},
@@ -10,15 +9,14 @@ use std::{
 use anyhow::Context;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
-use crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
-};
+use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
-use app::{App, InputMode};
-
 use clap::Parser;
+
+use app::App;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]

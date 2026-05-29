@@ -12,8 +12,11 @@ fn main() -> anyhow::Result<()> {
 
             for def in filtered {
                 println!(
-                    "\n--- DEF {:?} [{}/{}] ---",
-                    def.id, def.display_name, def.cube_size
+                    "\n--- DEF {:?} [{}/{}] ---\n\t{}",
+                    def.id,
+                    def.display_name,
+                    def.cube_size,
+                    sbc_file.display()
                 );
             }
         }

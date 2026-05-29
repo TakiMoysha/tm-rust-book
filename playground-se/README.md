@@ -15,3 +15,8 @@ Protobuf (.sbcPB)
 Небольшоая TUI для работы с sbc-файлами.
 
 - продолжить на layout [layouts tutorial / ratatui.rs](https://ratatui.rs/tutorials/json-editor/ui/)
+
+- [ ] упаковка при выборке блока:
+  - [ ] перевод dds в webp (или png)
+  - [ ] поиск и конвертация fbx/FBX файла в bltf(blg)
+  - [ ] экспорт с спекой и артифактом
