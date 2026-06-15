@@ -1,0 +1,10 @@
+[package]
+name = "x86_msr"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.rustfmt]
+max_width = 120
+
+[dependencies]
+x86 = "0.52.0"
