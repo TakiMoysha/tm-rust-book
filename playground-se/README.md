@@ -17,6 +17,6 @@ Protobuf (.sbcPB)
 - продолжить на layout [layouts tutorial / ratatui.rs](https://ratatui.rs/tutorials/json-editor/ui/)
 
 - [ ] упаковка при выборке блока:
-  - [ ] перевод dds в webp (или png)
+  - [x] перевод dds в webp (или png) - через imagemagic (`magick source.dds output.webp`)
   - [ ] поиск и конвертация fbx/FBX файла в bltf(blg)
   - [ ] экспорт с спекой и артифактом
