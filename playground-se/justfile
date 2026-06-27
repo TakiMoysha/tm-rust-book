@@ -1,0 +1,6 @@
+
+dev *ARGS:
+    cargo run {{ ARGS }} --message-format=short
+
+spellcheck:
+    aspell -a README.md

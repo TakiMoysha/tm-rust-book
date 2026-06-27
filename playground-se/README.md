@@ -1,4 +1,3 @@
-
 ## TODO
 
 XML (.sbc)
@@ -20,3 +19,4 @@ Protobuf (.sbcPB)
   - [x] перевод dds в webp (или png) - через imagemagic (`magick source.dds output.webp`)
   - [ ] поиск и конвертация fbx/FBX файла в bltf(blg)
   - [ ] экспорт с спекой и артифактом
+
