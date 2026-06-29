@@ -57,6 +57,7 @@ pub struct Definition {
     pub block_topology: String,
     #[serde(rename = "Size")]
     pub size: Size,
+    /// how much space the model can occupy (piston, hangar door, etc.)
     #[serde(rename = "ModelOffset")]
     pub model_offset: Coords,
     #[serde(rename = "CubeDefinition")]

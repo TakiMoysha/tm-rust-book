@@ -140,6 +140,7 @@ fn format_definition_details(def: &playground_se::types::Definition) -> String {
         format!("Type ID: {}", def.id.type_id),
         format!("Subtype ID: {}", def.id.subtype_id),
         format!("Cube Size: {}", def.cube_size),
+        format!("ModelOffset: [{}, {}, {}]", def.model_offset.x, def.model_offset.y, def.model_offset.z),
         format!("Block Topology: {}", def.block_topology),
         format!("Size: {}x{}x{}", def.size.x, def.size.y, def.size.z),
         format!("Block Pair Name: {}", def.block_pair_name),
