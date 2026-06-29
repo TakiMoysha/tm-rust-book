@@ -1,0 +1,5 @@
+[env]
+_.file = { path = ".env", redact = true }
+
+CARGO_TARGET_DIR = { required = false }
+
