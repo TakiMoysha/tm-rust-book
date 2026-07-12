@@ -1,5 +1,4 @@
 [env]
 _.file = { path = ".env", redact = true }
 
-CARGO_TARGET_DIR = { required = false }
-
+CARGO_TARGET_DIR = "{{ env.CARGO_TARGET_DIR | default(value='target') }}"
