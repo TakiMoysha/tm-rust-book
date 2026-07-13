@@ -1,0 +1,3 @@
+
+check:
+  cargo check --message-format=short
