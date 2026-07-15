@@ -1,0 +1,16 @@
+[package]
+name = "cersei-translate-agent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.103"
+async-trait = "0.1.89"
+cersei = { path = "../../../../projects/cersei/crates/cersei" }
+cersei-tools = { path = "../../../../projects/cersei/crates/cersei-tools/" }
+clap = { version = "4.6.1", features = ["derive"] }
+env_logger = "0.11.11"
+log = "0.4.33"
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.52.3", features = ["full"] }
+# cersei-memory = { path = "../../../../projects/cersei/crates/cersei", features = [ "graph"] }

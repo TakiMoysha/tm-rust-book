@@ -1,0 +1,5 @@
+[env]
+_.file = ".env"
+
+OPENAI_API_KEY = { required = true }
+OPENAI_BASE_URL = { required = true }
