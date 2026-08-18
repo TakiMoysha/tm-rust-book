@@ -1,0 +1,116 @@
+2026-08-13T17:41:44.619908Z  INFO servers::grpc: Using detected: 192.168.1.11:4001 as server address
+2026-08-13T17:41:44.620280Z  INFO standalone::metadata: Creating metadata kvbackend with dir: ./greptimedb_data/metadata, config: KvBackendConfig { file_size: 64.0MiB, purge_threshold: 256.0MiB, purge_interval: 60s }
+2026-08-13T17:41:44.621932Z  INFO raft_engine::engine: Recovering raft logs takes 1.611612ms
+2026-08-13T17:41:44.622235Z  INFO common_procedure::store: The procedure state store path is: procedure/
+2026-08-13T17:41:44.634407Z  INFO object_store::factory: The file storage home is: ./greptimedb_data/
+2026-08-13T17:41:44.634434Z  INFO object_store::util: Begin to clean temp storage directory: ./greptimedb_data/tmp/
+2026-08-13T17:41:44.634591Z  INFO object_store::util: Cleaned temp storage directory: ./greptimedb_data/tmp/
+2026-08-13T17:41:44.661219Z  INFO datanode::datanode: Creating raft-engine logstore with config: RaftEngineConfig { dir: None, file_size: 128.0MiB, purge_threshold: 1.0GiB, purge_interval: 60s, read_batch_size: 128, sync_write: false, enable_log_recycle: true, prefill_log_files: false, sync_period: None, recovery_parallelism: 12 } and storage path: ./greptimedb_data/wal
+2026-08-13T17:41:44.662019Z  WARN raft_engine::file_pipe_log::pipe_builder: Truncating log file due to broken batch (queue=Append,seq=1,offset=785): Corruption: Log item offset is smaller than log batch header length
+2026-08-13T17:41:44.739016Z  INFO raft_engine::engine: Recovering raft logs takes 77.75833ms
+2026-08-13T17:41:44.739570Z  INFO puffin::puffin_manager::stager::bounded_stager: Recovering the staging area, base_dir: "./greptimedb_data/index_intermediate/staging"
+2026-08-13T17:41:44.739818Z  INFO puffin::puffin_manager::stager::bounded_stager: Recovered the staging area, num_entries: 0, num_bytes: 0, cost: 251.576µs
+2026-08-13T17:41:44.739852Z  INFO mito2::sst::index::intermediate: Initializing intermediate manager, aux_path: ./greptimedb_data/index_intermediate
+2026-08-13T17:41:44.741298Z  INFO mito2::worker: Start region worker thread 0, init_check_delay: 57s
+2026-08-13T17:41:44.741325Z  INFO mito2::worker: Start region worker thread 1, init_check_delay: 60s
+2026-08-13T17:41:44.741332Z  INFO mito2::worker: Start region worker thread 2, init_check_delay: 130s
+2026-08-13T17:41:44.741391Z  INFO mito2::worker: Start region worker thread 3, init_check_delay: 97s
+2026-08-13T17:41:44.741423Z  INFO mito2::worker: Start region worker thread 4, init_check_delay: 24s
+2026-08-13T17:41:44.741433Z  INFO mito2::worker: Start region worker thread 5, init_check_delay: 143s
+2026-08-13T17:41:44.741452Z  INFO datanode::region_server: Region Engine mito is registered
+2026-08-13T17:41:44.741490Z  INFO datanode::region_server: Region Engine metric is registered
+2026-08-13T17:41:44.741497Z  INFO datanode::region_server: Region Engine file is registered
+2026-08-13T17:41:44.741754Z  INFO datanode::utils: region_id: 4398046511104(1024, 0), checkpoint: None
+2026-08-13T17:41:44.741774Z  INFO datanode::datanode: going to open 1 region(s)
+2026-08-13T17:41:44.741957Z  INFO mito2::worker::handle_open: Try to open region 4398046511104(1024, 0), worker: 4
+2026-08-13T17:41:44.742407Z  INFO mito2::manifest::storage: Create manifest store, cache: false
+2026-08-13T17:41:44.742545Z  INFO mito2::manifest::manager: Checkpoint not found in data/greptime/greptime_private/1024/1024_0000000000/manifest/, build manifest from scratch
+2026-08-13T17:41:44.742555Z  INFO mito2::manifest::manager: Replaying region manifest data/greptime/greptime_private/1024/1024_0000000000/manifest/ from version 0, last checkpoint version: 0
+2026-08-13T17:41:44.743856Z  INFO mito2::manifest::manager: Opened region manifest data/greptime/greptime_private/1024/1024_0000000000/manifest/, region_id: 4398046511104(1024, 0), start_version: 0, last_checkpoint_version: 0, replayed_deltas: 1, final_version: 0, cost: 1.450331ms
+2026-08-13T17:41:44.743927Z  INFO mito2::region::opener: Start replaying memtable at replay_from_entry_id: 0 for region 4398046511104(1024, 0), manifest version: 0, flushed entry id: 0, elapsed: 1.535569ms
+2026-08-13T17:41:44.743960Z  INFO log_store::raft_engine::log_store: Read logstore, namespace: 4398046511104, start: 1, span: (Some(1), Some(1))
+2026-08-13T17:41:44.744581Z  INFO log_store::raft_engine::log_store: Namespace 4398046511104 obsoleted 0 entries, compacted index: 0, span: (Some(1), Some(1))
+2026-08-13T17:41:44.744594Z  INFO mito2::region::opener: Replay WAL for region: 4398046511104(1024, 0), provider: RaftEngine(RaftEngineProvider { id: 4398046511104 }), rows recovered: 1, replay from entry id: 1, last entry id: 1, total timeseries replayed: 0, elapsed: 654.617µs
+2026-08-13T17:41:44.744618Z  INFO mito2::worker::handle_open: Region 4398046511104(1024, 0) is opened with requirements RegionRequirements { object_storage: false }, worker: 4, elapsed: 2.261729ms
+2026-08-13T17:41:44.744695Z  INFO handle_batch_open_requests: datanode::region_server: Region 4398046511104(1024, 0) is registered to engine mito
+2026-08-13T17:41:44.744722Z  INFO datanode::datanode: Opened 1 regions in 2.945258ms
+2026-08-13T17:41:44.744739Z  INFO mito2::region: Convert region 4398046511104(1024, 0) to leader, previous role state: Follower
+2026-08-13T17:41:44.744795Z  INFO mito2::region: Region 4398046511104(1024, 0) already in normal leader mode
+2026-08-13T17:41:44.744829Z  INFO datanode::datanode: all regions are opened
+2026-08-13T17:41:44.751069Z  INFO common_stat::resource: Starting to collect CPU usage periodically for every 5 seconds
+2026-08-13T17:41:44.760386Z  INFO flow::server: Flow Worker started in new thread
+2026-08-13T17:41:44.760870Z  INFO flow::server: Flow Worker started in new thread
+2026-08-13T17:41:44.761352Z  INFO flow::server: Flow Worker started in new thread
+2026-08-13T17:41:44.761792Z  INFO flow::server: Flow Worker started in new thread
+2026-08-13T17:41:44.761985Z  INFO flow::server: Flow Worker started in new thread
+2026-08-13T17:41:44.762155Z  INFO flow::server: Flow Worker started in new thread
+2026-08-13T17:41:44.762225Z  INFO flow::server: Flow Node Manager started
+2026-08-13T17:41:44.762887Z  INFO common_event_recorder::recorder: Start the background processor in event recorder to handle the received events.
+2026-08-13T17:41:44.763891Z  INFO cmd: Starting app: greptime-standalone
+2026-08-13T17:41:44.763911Z  INFO common_greptimedb_telemetry: Attention: GreptimeDB now collects anonymous usage data to help improve its roadmap and prioritize features.
+2026-08-13T17:41:44.763915Z  INFO common_greptimedb_telemetry: To learn more about this anonymous program and how to deactivate it if you don't want to participate, please visit the following URL:
+2026-08-13T17:41:44.763919Z  INFO common_greptimedb_telemetry: https://docs.greptime.com/reference/telemetry
+2026-08-13T17:41:44.763941Z  INFO common_procedure::local: LocalManager is start.
+2026-08-13T17:41:44.763946Z  INFO common_procedure::local: LocalManager start to recover
+2026-08-13T17:41:44.763975Z  INFO common_procedure::local: LocalManager finish recovery, cost: 0ms
+2026-08-13T17:41:44.763974Z  INFO common_greptimedb_telemetry: reporting greptimedb version: StatisticData { os: "linux", version: "1.1.4", arch: "x86_64", mode: Standalone, git_commit: "16e9abe4a9b0512ef9d800cb8c8f68d4167327bd", nodes: Some(1), uuid: "f441a9d5-20ed-4e23-a410-b92a6cfeb895", uptime: "hours" }
+2026-08-13T17:41:44.764047Z  INFO servers::server: Postgres server started at 0.0.0.0:4003
+2026-08-13T17:41:44.764079Z  INFO servers::server: Server POSTGRES_SERVER is started
+2026-08-13T17:41:44.764113Z  INFO servers::grpc: gRPC server(name=GRPC_SERVER) is bound to 0.0.0.0:4001
+2026-08-13T17:41:44.766550Z  INFO servers::server: Server GRPC_SERVER is started
+2026-08-13T17:41:44.766580Z  INFO servers::server: MySQL server started at 0.0.0.0:4002
+2026-08-13T17:41:44.766586Z  INFO servers::server: Server MYSQL_SERVER is started
+2026-08-13T17:41:44.766675Z  INFO servers::http: Enable dashboard service at '/dashboard'
+2026-08-13T17:41:44.766717Z  INFO servers::http: HTTP server timeout is disabled
+2026-08-13T17:41:44.767013Z  INFO servers::http: HTTP server is bound to 0.0.0.0:4000
+2026-08-13T17:41:44.767033Z  INFO servers::server: Server HTTP_SERVER is started
+2026-08-13T17:41:44.767058Z  INFO flow::adapter: Starting flownode manager's background task
+2026-08-13T17:41:44.767432Z  INFO flow::adapter::flownode_impl: FlowDualEngine done recovering
+2026-08-13T17:42:43.589056Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `greptime.default.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:42:43.589127Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `greptime.default.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:42:43.589209Z ERROR traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Failed to create table greptime.default.opentelemetry_traces err=0: Failed to find schema, schema info: default, at src/operator/src/statement/ddl.rs:424:9
+2026-08-13T17:42:43.589657Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `greptime.default.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:42:43.589686Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `greptime.default.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:42:43.589708Z ERROR traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Failed to create table greptime.default.opentelemetry_traces err=0: Failed to find schema, schema info: default, at src/operator/src/statement/ddl.rs:424:9
+2026-08-13T17:42:43.589818Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `greptime.default.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:42:43.589842Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `greptime.default.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:42:43.589859Z ERROR traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Failed to create table greptime.default.opentelemetry_traces err=0: Failed to find schema, schema info: default, at src/operator/src/statement/ddl.rs:424:9
+2026-08-13T17:42:43.590084Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/otlp/v1/traces (matched: /v1/otlp/v1/traces) from client 192.168.1.11:34992
+2026-08-13T17:43:13.709848Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/sql?db=greptime_private (matched: /v1/sql) from client 192.168.1.11:33502
+2026-08-13T17:43:48.899082Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/sql?db=public (matched: /v1/sql) from client 192.168.1.11:38410
+2026-08-13T17:43:48.899949Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/sql?db=public (matched: /v1/sql) from client 192.168.1.11:38394
+2026-08-13T17:47:50.005065Z  WARN servers::error: Failed to handle HTTP request  err=0: Not supported: Unsupported pipeline for trace
+2026-08-13T17:47:50.005114Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/otlp/v1/traces (matched: /v1/otlp/v1/traces) from client 192.168.1.11:37260
+2026-08-13T17:47:50.924909Z  WARN servers::http::client_ip: HTTP error response 415 Unsupported Media Type for POST /v1/sql?db=public (matched: /v1/sql) from client 192.168.1.11:37274
+2026-08-13T17:48:02.308896Z  WARN servers::http::client_ip: HTTP error response 415 Unsupported Media Type for POST /v1/sql?db=public (matched: /v1/sql) from client 192.168.1.11:58256
+2026-08-13T17:48:10.853325Z  WARN servers::http::client_ip: HTTP error response 415 Unsupported Media Type for POST /v1/sql?db=public (matched: /v1/sql) from client 192.168.1.11:33294
+2026-08-13T17:49:04.086386Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `beam.traces.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:49:04.086441Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `beam.traces.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:49:04.086471Z ERROR traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Failed to create table beam.traces.opentelemetry_traces err=0: Failed to find schema, schema info: traces, at src/operator/src/statement/ddl.rs:424:9
+2026-08-13T17:49:04.086558Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `beam.traces.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:49:04.086584Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `beam.traces.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:49:04.086602Z ERROR traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Failed to create table beam.traces.opentelemetry_traces err=0: Failed to find schema, schema info: traces, at src/operator/src/statement/ddl.rs:424:9
+2026-08-13T17:49:04.086744Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `beam.traces.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:49:04.086767Z  INFO traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Table `beam.traces.opentelemetry_traces` does not exist, try creating table
+2026-08-13T17:49:04.086784Z ERROR traces{protocol="otlp" request_type="traces"}:traces: operator::insert: Failed to create table beam.traces.opentelemetry_traces err=0: Failed to find schema, schema info: traces, at src/operator/src/statement/ddl.rs:424:9
+2026-08-13T17:49:04.086965Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/otlp/v1/traces (matched: /v1/otlp/v1/traces) from client 192.168.1.11:55048
+2026-08-13T17:51:31.434141Z  WARN servers::http::client_ip: HTTP error response 404 Not Found for POST /v1/otlp/ (matched: <unknown>) from client 192.168.1.11:47764
+2026-08-13T17:52:05.178283Z  WARN servers::http::client_ip: HTTP error response 404 Not Found for POST /v1/traces (matched: <unknown>) from client 192.168.1.11:57856
+2026-08-13T17:54:45.376618Z  INFO LocalManager::submit_root_procedure{procedure_name=metasrv-procedure::CreateTable procedure_id=a24c4a16-2c62-4810-aca2-bdd04f6bd224}: common_procedure::local::runner: Runner metasrv-procedure::CreateTable-a24c4a16-2c62-4810-aca2-bdd04f6bd224 starts
+2026-08-13T17:54:46.199471Z  INFO mito2::manifest::storage: Create manifest store, cache: false
+2026-08-13T17:54:46.199896Z  INFO mito2::manifest::manager: Checkpoint not found in data/greptime/public/1034/1034_0000000000/manifest/, build manifest from scratch
+2026-08-13T17:54:46.199965Z  INFO mito2::manifest::manager: Replaying region manifest data/greptime/public/1034/1034_0000000000/manifest/ from version 0, last checkpoint version: 0
+2026-08-13T17:54:46.200204Z  INFO mito2::manifest::storage: Create manifest store, cache: false
+2026-08-13T17:54:46.200241Z  INFO mito2::manifest::manager: Creating region manifest in data/greptime/public/1034/1034_0000000000/manifest/ with metadata RegionMetadata { column_metadatas: [[access_time TimestampMillisecond not null time_index metadata={"greptime:time_index": "true"} Timestamp 0], [remote_addr String null Field 1], [http_status String null Field 2], [http_method String null Field 3], [http_refer String null Field 4], [user_agent String null Field 5], [request String null Field 6]], time_index: 0, primary_key: [], region_id: 4440996184064(1034, 0), schema_version: 0, partition_expr: Some("") }, flushed_entry_id: 0
+2026-08-13T17:54:46.472800Z  INFO mito2::worker::handle_create: A new region created with requirement RegionRequirements { object_storage: false }, worker: 2, region: RegionMetadata { column_metadatas: [[access_time TimestampMillisecond not null time_index metadata={"greptime:time_index": "true"} Timestamp 0], [remote_addr String null Field 1], [http_status String null Field 2], [http_method String null Field 3], [http_refer String null Field 4], [user_agent String null Field 5], [request String null Field 6]], time_index: 0, primary_key: [], region_id: 4440996184064(1034, 0), schema_version: 0, partition_expr: Some("") }
+2026-08-13T17:54:46.472861Z  INFO LocalManager::submit_root_procedure{procedure_name=metasrv-procedure::CreateTable procedure_id=a24c4a16-2c62-4810-aca2-bdd04f6bd224}:RegionInvoker::handle_region_request:RegionServer::handle_region_request{region_id="4440996184064(1034, 0)"}:handle_request{request_type="Create"}:handle_request: mito2::engine: Added column metadatas: [[access_time TimestampMillisecond not null time_index metadata={"greptime:time_index": "true"} Timestamp 0], [remote_addr String null Field 1], [http_status String null Field 2], [http_method String null Field 3], [http_refer String null Field 4], [user_agent String null Field 5], [request String null Field 6]] to extensions, region_id: 4440996184064(1034, 0)
+2026-08-13T17:54:46.472908Z  INFO LocalManager::submit_root_procedure{procedure_name=metasrv-procedure::CreateTable procedure_id=a24c4a16-2c62-4810-aca2-bdd04f6bd224}:RegionInvoker::handle_region_request:RegionServer::handle_region_request{region_id="4440996184064(1034, 0)"}:handle_request{request_type="Create"}: datanode::region_server: Region 4440996184064(1034, 0) is registered to engine mito
+2026-08-13T17:54:46.473231Z  INFO LocalManager::submit_root_procedure{procedure_name=metasrv-procedure::CreateTable procedure_id=a24c4a16-2c62-4810-aca2-bdd04f6bd224}: common_meta::ddl::create_table: Successfully created table: greptime.public.access_logs, table_id: 1034, procedure_id: a24c4a16-2c62-4810-aca2-bdd04f6bd224
+2026-08-13T17:54:46.473262Z  INFO LocalManager::submit_root_procedure{procedure_name=metasrv-procedure::CreateTable procedure_id=a24c4a16-2c62-4810-aca2-bdd04f6bd224}: common_procedure::local::runner: Procedure metasrv-procedure::CreateTable-a24c4a16-2c62-4810-aca2-bdd04f6bd224 done
+2026-08-13T17:54:46.473332Z  INFO LocalManager::submit_root_procedure{procedure_name=metasrv-procedure::CreateTable procedure_id=a24c4a16-2c62-4810-aca2-bdd04f6bd224}: common_procedure::local::runner: Runner metasrv-procedure::CreateTable-a24c4a16-2c62-4810-aca2-bdd04f6bd224 exits
+2026-08-13T17:54:46.473434Z  INFO sql{protocol="http" request_type="sql"}:SqlQueryHandler::do_query:execute_sql:create_table:create_table_inner:create_non_logic_table:DdlManager::submit_ddl_task: common_meta::ddl_manager: Table: 1034 is created via procedure_id ProcedureId(a24c4a16-2c62-4810-aca2-bdd04f6bd224)
+2026-08-13T17:54:46.473449Z  INFO sql{protocol="http" request_type="sql"}:SqlQueryHandler::do_query:execute_sql:create_table:create_table_inner:create_non_logic_table: operator::statement::ddl: Successfully created table 'greptime.public.access_logs' with table id 1034
+2026-08-13T17:58:11.000873Z  INFO pipeline::manager::table: Insert pipeline success, name: "hopjob.beam.v1", table: "greptime.greptime_private.pipelines", output: Output { data: OutputData::AffectedRows(1), meta: OutputMeta { plan: None, cost: 0 } }
+2026-08-13T17:58:35.938172Z  WARN servers::error: Failed to handle HTTP request  err=0: Not supported: Unsupported pipeline for trace
+2026-08-13T17:58:35.938207Z  WARN servers::http::client_ip: HTTP error response 400 Bad Request for POST /v1/otlp/v1/traces (matched: /v1/otlp/v1/traces) from client 192.168.1.11:33800
+

@@ -1,0 +1,3 @@
+
+test-tail *ARGS:
+  tail -f app.log | cargo run {{ARGS}}
