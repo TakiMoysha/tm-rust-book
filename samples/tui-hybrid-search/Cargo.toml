@@ -1,0 +1,19 @@
+[package]
+name = "tui-hybrid-search"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.5", features = ["derive"] }
+tokio = { version = "1.53.1", features = ["full"] }
+
+crossterm = "0.29.0"
+ratatui = "0.30.2"
+ratatui-themes = "0.3.0"
+
+surrealdb = { version = "3.2.3", features = ["kv-mem"] }
+thiserror = "2.0.19"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+serde = { version = "1.0.229", features = ["derive"] }
