@@ -6,6 +6,9 @@
 - _primitives_ - review atomic crates or rust concepts
 - _samples_ - projects imitating something
 
+### Practice
+
+
 ## TODO
 
 1. zero-copy

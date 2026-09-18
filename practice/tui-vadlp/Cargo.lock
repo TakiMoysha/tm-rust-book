@@ -1496,15 +1496,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
 
 [[package]]
-name = "tui-ytdlp"
-version = "0.1.0"
-dependencies = [
- "clap",
- "crossterm",
- "ratatui",
-]
-
-[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1561,6 +1552,15 @@ dependencies = [
  "getrandom 0.4.3",
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "vadlp"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "crossterm",
+ "ratatui",
 ]
 
 [[package]]

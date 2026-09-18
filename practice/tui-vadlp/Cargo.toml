@@ -1,5 +1,5 @@
 [package]
-name = "tui-ytdlp"
+name = "vadlp"
 version = "0.1.0"
 edition = "2024"
 

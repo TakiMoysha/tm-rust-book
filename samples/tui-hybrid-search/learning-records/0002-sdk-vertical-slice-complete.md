@@ -1,0 +1,5 @@
+# LR-0002 — SDK vertical slice completed; v3 create() semantics established
+
+User completed lesson 0001: working connect → create → select against embedded `Mem` engine, verified by `cargo run` output. Demonstrated initiative by independently finding and applying `#[derive(SurrealValue)]` (the v3 native typing system) beyond what the lesson taught. Established a corrected fact for all future materials: in surrealdb 3.x, `create()` yields ONE record (`Option<T>`) regardless of table vs fixed-ID target; `Vec<T>` belongs to `insert()`/`select()` — my original cheat sheet was wrong and has been fixed.
+
+**Implications:** SDK basics are now a floor — never re-teach connect/use_ns/create/select. User is ready for architecture-level content: schema definition, shared static DB handle (`LazyLock` + `Surreal::init()`), then ratatui. User's style: keeps `tokio features=["full"]`, retains unused scaffolding (`get_theme`, imports) without complaint — tolerable, revisit when warnings block readability.

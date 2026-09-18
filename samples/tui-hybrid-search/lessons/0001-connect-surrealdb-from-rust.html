@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 0001 — Make your program talk to SurrealDB</title>
+<link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<article>
+
+<p class="kicker">Lesson 0001 · tui-hybrid-search · data layer</p>
+<h1>Make your program talk to SurrealDB</h1>
+<p class="lede">Today you get a vertical slice: connect, write one record, read it back — the foundation everything in the explorer stands on.</p>
+
+<h2>Why this matters</h2>
+<p>Your mission is a DB-explorer TUI <a class="cite" href="../MISSION.md">[mission]</a>. An explorer is skin over a data layer — if the program can't talk to SurrealDB, there is nothing to explore. Your repo currently doesn't compile: <code>#[tokio::main]</code> is used but <strong>tokio isn't even in Cargo.toml</strong>, and <code>Database</code>/<code>is_schema_exists</code> are called but undefined. We'll fix the first properly today, and park the second until <a href="#next">lesson 0002</a>.</p>
+
+<h2>The three ideas you need</h2>
+<ol>
+<li><strong>The engine is a compile-time choice.</strong> The SDK is generic over its backing engine: <code>Surreal::new::&lt;Mem&gt;(())</code> embeds an in-memory database inside your process — zero setup, perfect for development. Later, swapping to <code>&lt;Ws&gt;</code> points the same code at a real server.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/embedding"><sup>[1]</sup></a></li>
+<li><strong>Everything is async.</strong> Every SDK call returns a future, so a tokio runtime must exist. <code>#[tokio::main]</code> builds one under your <code>main()</code> — that's its whole job.<a class="cite" href="https://tokio.rs/tokio/tutorial"><sup>[2]</sup></a></li>
+<li><strong>Serde is the bridge.</strong> Derive <code>Serialize</code>/<code>Deserialize</code> on a struct and records flow through it in both directions — typed queries, no string wrangling.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods"><sup>[3]</sup></a></li>
+</ol>
+
+<div class="note">Keep <a href="../reference/surrealdb-rust-connection.html">the connection cheat sheet</a> open beside this lesson — it compresses everything below onto one page.</div>
+
+<h2>Do it now (~15 min)</h2>
+<ol class="steps">
+<li>
+<strong>Add the missing dependencies.</strong> Run these in the project root:
+<pre><code>cargo add tokio --features macros,rt-multi-thread
+cargo add surrealdb --features kv-mem
+cargo add serde --features derive</code></pre>
+<p><code>kv-mem</code> compiles the in-memory engine in — without the feature flag, <code>Mem</code> literally doesn't exist.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/embedding"><sup>[1]</sup></a> Check <code>Cargo.toml</code>: <code>surrealdb</code> now has <code>features = ["kv-mem"]</code>.</p>
+</li>
+<li>
+<strong>Replace all of <code>src/main.rs</code></strong> with this. (Your old draft called functions that don't exist yet — we rebuild that idea properly next lesson.)
+<pre><code>use serde::{Deserialize, Serialize};
+use surrealdb::engine::local::Mem;
+use surrealdb::Surreal;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Person {
+    name: String,
+    role: String,
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result&lt;()&gt; {
+    // Engine chosen at compile time; runs inside this process.
+    let db = Surreal::new::&lt;Mem&gt;(()).await?;
+    db.use_ns("explorer").use_db("dev").await?;
+
+    let made: Option&lt;Person&gt; = db
+        .create(("person", "tobias"))
+        .content(Person {
+            name: "Tobias".into(),
+            role: "learner".into(),
+        })
+        .await?;
+    println!("created: {made:?}");
+
+    let people: Vec&lt;Person&gt; = db.select("person").await?;
+    println!("people: {people:?}");
+
+    Ok(())
+}</code></pre>
+</li>
+<li>
+<strong>Run it:</strong> <code>cargo run</code>
+<p>Expected:</p>
+<pre><code>created: Some(Person { name: "Tobias", role: "learner" })
+people: [Person { name: "Tobias", role: "learner" }]</code></pre>
+<p>If the compiler complains, read the error top-down and match it against the cheat sheet's error table before changing anything.</p>
+</li>
+<li>
+<strong>Predict, then prove.</strong> Change <code>("person", "tobias")</code> to just <code>"person"</code>, keeping the <code>Option&lt;Person&gt;</code> annotation. <em>Before compiling</em>, say out loud whether this compiles, and what type the SDK would rather give you. Then run <code>cargo check</code> to settle it. Revert when done.
+</li>
+</ol>
+
+<h2>Check yourself</h2>
+<p>Answer from memory — no scrolling up.</p>
+
+<section class="quiz" data-answer="a">
+  <p class="q">Why does <code>#[tokio::main]</code> sit above <code>fn main()</code>?</p>
+  <button data-k="a">It starts the async runtime that awaits need</button>
+  <button data-k="b">It wires the serde derives into each struct</button>
+  <button data-k="c">It checks every SurrealQL string before it runs</button>
+  <p class="feedback" data-ok="Right — no runtime, no .await. Everything else is handled elsewhere." data-bad="Recall what problem async fn main would have without help…"></p>
+</section>
+
+<section class="quiz" data-answer="a">
+  <p class="q">In <code>Surreal::new::&lt;Mem&gt;(())</code>, what does <code>&lt;Mem&gt;</code> decide?</p>
+  <button data-k="a">Which storage engine will back the connection</button>
+  <button data-k="b">Which namespace will hold all future records</button>
+  <button data-k="c">Which struct will receive rows coming from queries</button>
+  <p class="feedback" data-ok="Yes — swap &lt;Ws&gt; in later and the same calls hit a real server." data-bad="Think compile time vs. runtime: what varies between Mem and Ws?"></p>
+</section>
+
+<section class="quiz" data-answer="a">
+  <p class="q"><code>db.use_ns("explorer").use_db("dev")</code> exists so that…</p>
+  <button data-k="a">Every operation below is scoped to that database</button>
+  <button data-k="b">The named namespace gets created on first connect</button>
+  <button data-k="c">Credentials get checked against a running server</button>
+  <p class="feedback" data-ok="Exactly — it sets context once; creation is DEFINE's job." data-bad="One option describes signin(), another invents behavior. Which is scope?"></p>
+</section>
+
+<h2 id="next">Where this goes next</h2>
+<p>You now own the smallest honest version of the explorer's data layer. Lesson 0002 turns to your parked sketch: defining real schema (<code>DEFINE TABLE</code>) and replacing the broken <code>infra/mod.rs</code> with a proper shared DB handle (<code>LazyLock</code> + <code>Surreal::init()</code>).</p>
+
+<h2>Primary source</h2>
+<p>Read tonight (5–10 min): <a href="https://surrealdb.com/docs/surrealdb/reference/rust/embedding">Embedding SurrealDB in Rust — official docs</a>. It's the canonical page behind everything above.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/embedding"><sup>[1]</sup></a></p>
+
+<div class="note"><strong>Stuck or curious?</strong> Ask me anything — I'm your teacher for this project. Compiler errors, why <code>Option</code> here but <code>Vec</code> there, what <code>Surreal::init()</code> is doing under the hood: all fair game.</div>
+
+<footer class="lesson-nav">
+  Reference: <a href="../reference/surrealdb-rust-connection.html">Connect &amp; CRUD cheat sheet</a> · Mission: <a href="../MISSION.md">MISSION.md</a> · Next: <em>0002 — Schema &amp; the shared DB handle</em>
+</footer>
+
+</article>
+<script src="../assets/quiz.js"></script>
+</body>
+</html>

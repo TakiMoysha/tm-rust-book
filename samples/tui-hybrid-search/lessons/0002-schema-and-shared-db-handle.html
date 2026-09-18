@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 0002 — Schema &amp; the shared DB handle</title>
+<link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<article>
+
+<p class="kicker">Lesson 0002 · tui-hybrid-search · data layer</p>
+<h1>Schema &amp; the shared DB handle</h1>
+<p class="lede">Today you finish the data layer properly: one static DB handle any function can use, and a real enforced schema — replacing your parked <code>infra/mod.rs</code> sketch.</p>
+
+<h2>Why this matters</h2>
+<p>Your first <code>infra/mod.rs</code> draft asked three questions without knowing it:</p>
+<ol>
+<li><strong>How do functions share the DB?</strong> Your sketch reached for a <code>static LazyLock&lt;Surreal&lt;Client&gt;&gt;</code> — right instinct.</li>
+<li><strong>Why did it fight back?</strong> You can't <code>.await</code> inside <code>LazyLock::new</code> — its closure is synchronous. That's what <code>DbGuard</code>/<code>fn startup</code> were groping toward.</li>
+<li><strong>Do I need <code>is_schema_exists()</code>?</strong> No — SurrealQL's <code>DEFINE … IF NOT EXISTS</code> is idempotent, so we simply define on every boot.</li>
+</ol>
+
+<h2>The three ideas you need</h2>
+<ol>
+<li><strong>The init/connect split.</strong> <code>Surreal::init()</code> hands back an <em>unconnected</em> client — cheap, no I/O, safe inside a static. Later, in async land, <code>.connect(endpoint)</code> binds the engine at runtime.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods/init"><sup>[1]</sup></a></li>
+<li><strong>The endpoint is data, not code.</strong> Read it from an env var with a <code>mem://</code> fallback. Today that means embedded; when the explorer targets a live server you change an environment variable, not your code.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods/init"><sup>[1]</sup></a></li>
+<li><strong>Schemas are definitions, not migrations.</strong> <code>SCHEMAFULL</code> tables reject fields you haven't declared with <code>DEFINE FIELD</code> — exactly the predictability a DB explorer needs to render results.<a class="cite" href="https://surrealdb.com/docs/surrealql/statements/define/field"><sup>[2]</sup></a></li>
+</ol>
+
+<div class="note">Everything below is compressed on the cheat sheet under <a href="../reference/surrealdb-rust-connection.html">“Shared static handle”</a>.</div>
+
+<h2>Do it now (~20 min)</h2>
+<ol class="steps">
+<li>
+<strong>Rewrite all of <code>src/infra/mod.rs</code>:</strong>
+<pre><code>use std::sync::LazyLock;
+
+use surrealdb::engine::any::Any;
+use surrealdb::Surreal;
+
+pub static DB: LazyLock&lt;Surreal&lt;Any&gt;&gt; = LazyLock::new(Surreal::init);
+
+pub async fn init() -&gt; anyhow::Result&lt;()&gt; {
+    let endpoint = std::env::var("DB_ENDPOINT").unwrap_or_else(|_| "mem://".into());
+    DB.connect(endpoint).await?;
+    DB.use_ns("explorer").use_db("dev").await?;
+    define_schema().await?;
+    Ok(())
+}
+
+async fn define_schema() -&gt; anyhow::Result&lt;()&gt; {
+    DB.query(
+        "DEFINE TABLE IF NOT EXISTS person SCHEMAFULL;
+         DEFINE FIELD IF NOT EXISTS name ON person TYPE string;
+         DEFINE FIELD IF NOT EXISTS role ON person TYPE string;",
+    )
+    .await?
+    .check()?;
+    Ok(())
+}</code></pre>
+<p>Note <code>.check()</code>: raw queries don't fail by default — it converts statement errors into a normal <code>Err</code>.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods/query"><sup>[3]</sup></a></p>
+</li>
+<li>
+<strong>Update <code>src/main.rs</code></strong> to declare the module and use the shared handle:
+<pre><code>mod infra;
+
+use serde::{Deserialize, Serialize};
+use surrealdb::types::SurrealValue;
+
+#[derive(Debug, Serialize, Deserialize, SurrealValue)]
+pub struct Person {
+    pub name: String,
+    pub role: String,
+}
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    infra::init().await?;
+
+    let made: Option&lt;Person&gt; = infra::DB
+        .create("person")
+        .content(Person {
+            name: "Tobias".into(),
+            role: "learner".into(),
+        })
+        .await?;
+    println!("created: {made:?}");
+
+    let people: Vec&lt;Person&gt; = infra::DB.select("person").await?;
+    println!("people: {people:?}");
+
+    Ok(())
+}</code></pre>
+<p>Fields became <code>pub</code>: they're now part of the crate's public surface, used across modules. The old local <code>let db = …</code>, <code>get_theme</code>, and unused imports go away — warnings gone.</p>
+</li>
+<li>
+<strong>Run it:</strong> <code>cargo run</code> — same output as lesson 0001, but now through the shared handle with an enforced schema behind it.
+<pre><code>created: Some(Person { name: "Tobias", role: "learner" })
+people: [Person { name: "Tobias", role: "learner" }]</code></pre>
+</li>
+<li>
+<strong>Predict, then prove the schema bites.</strong> Append this before <code>Ok(())</code>. <em>Before running</em>, say out loud what <code>check()</code> will return.
+<pre><code>let bad = infra::DB
+    .query("CREATE person SET name = 'eve', role = 'tester', level = 9")
+    .await?
+    .check();
+println!("bad: {bad:?}");</code></pre>
+<p><code>SCHEMAFULL</code> should refuse the undeclared <code>level</code> field. Confirm, then delete the experiment.</p>
+</li>
+</ol>
+
+<h2>Check yourself</h2>
+<p>Answer from memory — no scrolling up.</p>
+
+<section class="quiz" data-answer="a">
+  <p class="q">Why doesn't <code>LazyLock::new(|| Surreal::new::&lt;Mem&gt;(()).await)</code compile?</p>
+  <button data-k="a">A closure inside LazyLock cannot perform awaits</button>
+  <button data-k="b">The borrow checker forbids storing clients in statics</button>
+  <button data-k="c">Database clients cannot initialize outside async contexts</button>
+  <p class="feedback" data-ok="Right — that's why init()/connect() are split." data-bad="One of these is true of every static; another is invented…"></p>
+</section>
+
+<section class="quiz" data-answer="a">
+  <p class="q">What does <code>Surreal::init()</code> hand back?</p>
+  <button data-k="a">An unconnected client that becomes usable after connecting</button>
+  <button data-k="b">A connected client pinned to the memory engine</button>
+  <button data-k="c">A pool of ready-made connections awaiting your queries</button>
+  <p class="feedback" data-ok="Exactly — binding happens at connect(), which needs async." data-bad="If init() connected, it would have to await — inside what?"></p>
+</section>
+
+<section class="quiz" data-answer="a">
+  <p class="q">What does <code>SCHEMAFULL</code> promise about writes?</p>
+  <button data-k="a">Only declared fields may appear on stored records</button>
+  <button data-k="b">Fields get created automatically from whatever gets written</button>
+  <button data-k="c">Records get validated against external JSON schemas always</button>
+  <p class="feedback" data-ok="Yes — option b describes SCHEMALESS, the default." data-bad="Which behaviour would make explorer output unpredictable?"></p>
+</section>
+
+<h2 id="next">Where this goes next</h2>
+<p>Data layer done: connection, scope, schema, shared handle. Lesson 0003 starts the other pillar — a ratatui event loop that paints “hello world”, survives resizing, and restores your terminal on exit. Then 0004 puts your <code>person</code> records inside it.</p>
+
+<h2>Primary source</h2>
+<p>Read tonight (5 min): <a href="https://surrealdb.com/docs/surrealdb/reference/rust/methods/init"><code>Surreal::init()</code> — official SDK docs</a>, including the env-var endpoint pattern you just implemented.<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods/init"><sup>[1]</sup></a></p>
+
+<div class="note"><strong>Stuck or curious?</strong> Ask me anything — why <code>Any</code> instead of <code>Mem</code> in the static's type, how <code>check()</code> works internally, whether <code>DbGuard</code>'s Drop idea was salvageable. All fair game.</div>
+
+<footer class="lesson-nav">
+  Reference: <a href="../reference/surrealdb-rust-connection.html">Connect &amp; CRUD cheat sheet</a> · Previous: <a href="0001-connect-surrealdb-from-rust.html">0001 — First contact</a> · Mission: <a href="../MISSION.md">MISSION.md</a> · Next: <em>0003 — The ratatui event loop</em>
+</footer>
+
+</article>
+<script src="../assets/quiz.js"></script>
+</body>
+</html>

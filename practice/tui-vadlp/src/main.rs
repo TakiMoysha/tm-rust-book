@@ -9,7 +9,7 @@ use ratatui::DefaultTerminal;
 /// - use dir as library directory (library file in current dir or xdg_config)
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input_args = clap::Command::new("tm-ytlib")
+    let input_args = clap::Command::new("dev.takimoysha.vadlp")
         .author("takimoysha")
         .version("0.1.0")
         .about("TUI for my pipeline of yt-dlp (video download and processing)")

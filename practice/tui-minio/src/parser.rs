@@ -52,8 +52,8 @@ impl TryFrom<&str> for Config {
                                 .parse::<SocketAddr>()
                                 .map_err(|e| ConfigError::InvalidAddress(format!("{value}: {e}")))?
                         }
-                        "username" => todo!("stop-point"),
-                        "password" => todo!("stop-point"),
+                        "username" => todo!("stop-point(username)"),
+                        "password" => todo!("stop-point(password)"),
                         _ => eprintln!("unknown key: {key}"),
                     }
 

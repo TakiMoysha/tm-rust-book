@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reference — SurrealDB Rust SDK: connect &amp; CRUD</title>
+<link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<article>
+<p class="kicker">Reference · surrealdb 3.x</p>
+<h1>Connect &amp; CRUD from Rust</h1>
+<p class="lede">The whole data-layer vocabulary of the explorer, on one page.</p>
+
+<h2>Cargo.toml</h2>
+<pre><code>[dependencies]
+surrealdb = { version = "3.2", features = ["kv-mem"] } # kv-mem: in-memory engine
+tokio     = { version = "1",   features = ["macros", "rt-multi-thread"] }
+serde     = { version = "1",   features = ["derive"] }
+anyhow    = "1"</code></pre>
+<p>Feature flags choose what gets compiled in: <code>kv-mem</code> (in-memory),
+<code>kv-rocksdb</code> (embedded file), <code>protocol-ws</code> (remote server).
+<a href="https://surrealdb.com/docs/surrealdb/reference/rust/embedding">docs ↗</a></p>
+
+<h2>Engines — the type parameter decides</h2>
+<table>
+<tr><th>Engine</th><th>Connect</th><th>When</th></tr>
+<tr><td>In-memory</td><td><code>Surreal::new::&lt;Mem&gt;(())</code></td><td>Dev, tests, demos. Zero setup.</td></tr>
+<tr><td>RocksDB file</td><td><code>Surreal::new::&lt;RocksDb&gt;("path")</code></td><td>Embedded persistence, no server.</td></tr>
+<tr><td>WebSocket</td><td><code>Surreal::new::&lt;Ws&gt;("localhost:8000")</code></td><td>Real server via WS.</td></tr>
+<tr><td>Any (late-bound)</td><td><code>Surreal::init()</code> + <code>.connect(url)</code></td><td>Endpoint decided at runtime — good for a static handle.</td></tr>
+</table>
+<p>The turbofish isn't decoration: it selects the backing engine at compile time.
+<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/embedding">[embedding]</a></p>
+
+<h2>Lifecycle of every program</h2>
+<pre><code>#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let db = Surreal::new::&lt;Mem&gt;(()).await?;      // 1. connect
+    db.use_ns("explorer").use_db("dev").await?;   // 2. scope
+
+    // 3. operate: create / select / query / update / delete
+    Ok(())
+}</code></pre>
+<ul>
+<li><code>#[tokio::main]</code> starts the async runtime — every SDK call is <code>.await</code>-able.</li>
+<li><code>use_ns</code>/<code>use_db</code> scope all later operations; do it once after connecting.</li>
+</ul>
+
+<h2>Shared static handle</h2>
+<pre><code>static DB: LazyLock&lt;Surreal&lt;Any&gt;&gt; = LazyLock::new(Surreal::init);
+
+// once at startup:
+let endpoint = env::var("DB_ENDPOINT").unwrap_or_else(|_| "mem://".into());
+DB.connect(endpoint).await?;
+DB.use_ns("explorer").use_db("dev").await?;</code></pre>
+<p><code>LazyLock</code> closures can't <code>.await</code>, so <code>init()</code> hands back an
+<em>unconnected</em> client; <code>connect()</code> binds the engine at runtime.
+<a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods/init">[init]</a></p>
+
+<h2>CRUD with typed structs</h2>
+<pre><code>#[derive(Debug, Serialize, Deserialize)]
+struct Person {
+    name: String,
+    role: String,
+}
+
+// CREATE — always ONE record per call → Option&lt;T&gt;
+// (works with table name or ("table", id); annotation drives extraction)
+let made: Option&lt;Person&gt; = db.create(("person", "tobias"))
+    .content(Person { name: "Tobias".into(), role: "learner".into() })
+    .await?;
+
+// INSERT — many records → Vec&lt;T&gt;
+let many: Vec&lt;Person&gt; = db.insert("person")
+    .content(vec![Person { name: "A".into(), role: "x".into() }])
+    .await?;
+
+// SELECT ALL
+let people: Vec&lt;Person&gt; = db.select("person").await?;
+
+// SELECT ONE
+let one: Option&lt;Person&gt; = db.select(("person", "tobias")).await?;
+
+// RAW SurrealQL (check() turns query errors into Err)
+let mut res = db.query("SELECT * FROM person WHERE role = $role")
+    .bind(("role", "learner"))
+    .await?
+    .check()?;
+let hits: Vec&lt;Person&gt; = res.take(0)?;</code></pre>
+<p>Serde bridges struct ⇄ record: derive <code>Serialize</code> to write,
+<code>Deserialize</code> to read. Extra stored fields are ignored on read unless the
+struct opts into strictness. <a class="cite" href="https://surrealdb.com/docs/surrealdb/reference/rust/methods">[methods]</a></p>
+
+<h2>Common first-run errors</h2>
+<table>
+<tr><th>Error</th><th>Cause</th></tr>
+<tr><td><code>cannot find Mem</code></td><td>Missing <code>kv-mem</code> feature in Cargo.toml</td></tr>
+<tr><td><code>#[tokio::main] not found</code></td><td>tokio crate missing or no <code>macros</code> feature</td></tr>
+<tr><td><code>Serialize not implemented</code></td><td>Struct missing <code>#[derive(Serialize, Deserialize)]</code></td></tr>
+<tr><td><code>create</code> gives one record</td><td>By design: <code>create</code> = 1 record (<code>Option&lt;T&gt;</code>); <code>insert</code> = many (<code>Vec&lt;T&gt;</code>)</td></tr>
+<tr><td>Type mismatch on <code>connect</code></td><td><code>Surreal::init()</code> clients bind via <code>.connect(url)</code>, not turbofish engines</td></tr>
+</table>
+
+<footer class="lesson-nav">
+Related: <a href="../lessons/0001-connect-surrealdb-from-rust.html">Lesson 0001 — First contact</a>
+</footer>
+</article>
+</body>
+</html>
