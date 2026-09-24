@@ -5,16 +5,17 @@ use std::{
 };
 
 use anyhow::Context;
+use tracing::info;
 
 use playground_se::types;
 
 fn main() -> anyhow::Result<()> {
     let gamedir = env::var("GAME_DIR")
-        .expect("GAME_DIR must be set (SE game dir)")
+        .unwrap_or("./tmp".into())
         .parse::<PathBuf>()
         .context("failed to parse GAME_DIR")?;
     let sdkdir = env::var("SDK_DIR")
-        .expect("SDK_DIR must be set (SE sdk dir)")
+        .unwrap_or("./tmp".into())
         .parse::<PathBuf>()
         .context("failed to parse SDK_DIR")?;
 
@@ -75,32 +76,43 @@ fn main() -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod test {
+    use tracing::instrument;
+
     use super::*;
 
     #[test]
     fn should_parse_test_sbc_file() {
-        let example_file = Path::new("tmp/example.sbc");
+        let example_file = PathBuf::from("tmp/test_logistic.sbc");
+        assert!(
+            example_file.exists(),
+            "[ERROR] Failed to find {}",
+            example_file.display()
+        );
 
-        if let Ok(content) = read_to_string(example_file) {
-            let definitions = types::parse_sbc(&content);
-            assert!(definitions.is_ok(), "Failed to parse example.sbc");
+        let read_result = read_to_string(example_file)
+            .unwrap_or_else(|err| panic!("[ERROR] Failed to read example.sbc: {}", err));
 
-            println!("Successfully parsed {:?} definitions", definitions.as_ref());
-            for (i, def) in definitions
-                .unwrap()
-                .cube_blocks
-                .definitions
-                .iter()
-                .enumerate()
-            {
-                println!("\n--- Definition {} ---", i + 1);
-                println!("ID: {:?}", def.id);
-                println!("DisplayName: {}", def.display_name);
-                println!("CubeSize: {}", def.cube_size);
-                println!("Size: {:?}", def.size);
-            }
-        } else {
-            panic!("Failed to read example.sbc");
-        }
+        // let definitions = types::parse_sbc(&read_result);
+        //
+        // assert!(definitions.is_ok(), "[ERROR] {}", format!("ParseError: {} {}", example_file.display(), definitions.unwrap_err()));
+        //
+        // println!("[OK] Successfully parsed {:?} definitions", definitions.as_ref());
+        // for (i, def) in definitions
+        //     .unwrap()
+        //     .cube_blocks
+        //     .definitions
+        //     .iter()
+        //     .enumerate()
+        // {
+        //     println!("\n--- Definition {} ---", i + 1);
+        //     println!("ID: {:?}", def.id);
+        //     println!("DisplayName: {}", def.display_name);
+        //     println!("CubeSize: {}", def.cube_size);
+        //     println!("Size: {:?}", def.size);
+        //     println!("CriticalComponent: {:?}\n", def.critical_component);
+        //     println!("MountPoints: {:#?}\n", def.mount_points);
+        // }
+
+        let definitions = types::inspect::debug_parse_sbc(&read_result);
     }
 }

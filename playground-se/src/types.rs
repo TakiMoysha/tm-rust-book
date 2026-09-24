@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use quick_xml::DeError;
 use quick_xml::de::from_str;
 use serde::{Deserialize, Serialize};
@@ -5,7 +7,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum DefinitionParseError {
-    #[error("XML parse error [FILE:NONE]: {0}")]
+    #[error("XML parse error [FILE:UNSUPPORT]: {0}")]
     XmlError(String),
     #[error("IO error: {0}")]
     IoError(String),
@@ -13,22 +15,24 @@ pub enum DefinitionParseError {
 
 impl From<DeError> for DefinitionParseError {
     fn from(e: DeError) -> Self {
+        dbg!(&e);
         DefinitionParseError::XmlError(e.to_string())
     }
 }
 
 impl From<quick_xml::Error> for DefinitionParseError {
     fn from(e: quick_xml::Error) -> Self {
+        dbg!(&e);
         DefinitionParseError::XmlError(e.to_string())
     }
 }
 
 impl From<std::io::Error> for DefinitionParseError {
     fn from(e: std::io::Error) -> Self {
+        dbg!(&e);
         DefinitionParseError::IoError(e.to_string())
     }
 }
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Definitions {
     #[serde(rename = "CubeBlocks")]
@@ -184,18 +188,43 @@ pub struct MountPoints {
     pub mount_points: Vec<MountPoint>,
 }
 
+impl Display for MountPoints {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for mount_point in &self.mount_points {
+            write!(f, "{}\n", mount_point);
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MountPoint {
+    #[serde(rename = "@Side")]
+    pub side: String,
     #[serde(rename = "@EndX")]
     pub end_x: f32,
     #[serde(rename = "@EndY")]
     pub end_y: f32,
-    #[serde(rename = "@Side")]
-    pub side: String,
     #[serde(rename = "@StartX")]
     pub start_x: f32,
     #[serde(rename = "@StartY")]
     pub start_y: f32,
+    #[serde(rename = "@Default")]
+    pub default: Option<bool>,
+}
+
+impl Display for MountPoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Side: {}, EndX: {}, EndY: {}, StartX: {}, StartY: {}",
+            self.side, self.end_x, self.end_y, self.start_x, self.start_y
+        );
+        if self.default.unwrap_or(false) {
+            write!(f, " (default)");
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -237,4 +266,122 @@ pub struct BoneInfo {
 pub fn parse_sbc(content: &str) -> Result<Definitions, DefinitionParseError> {
     let definitions: Definitions = from_str(content)?;
     Ok(definitions)
+}
+
+pub mod inspect {
+    use std::collections::{BTreeMap, BTreeSet};
+
+    use quick_xml::Reader;
+    use quick_xml::events::Event;
+
+    #[derive(Debug, Default)]
+    pub struct NodeStats {
+        pub count: usize,                    // Сколько раз встречается путь
+        pub sample_values: BTreeSet<String>, // Образцы значений (например, до 5 уникальных)
+        pub attributes: BTreeSet<String>,    // Какие атрибуты встречались у этого элемента
+    }
+
+    pub fn debug_parse_sbc(content: &str) {
+        let mut reader = Reader::from_str(content);
+        reader.config_mut().trim_text(true);
+
+        let mut buf = Vec::new();
+        let mut stack: Vec<String> = Vec::new();
+        let mut schema: BTreeMap<String, NodeStats> = BTreeMap::new();
+
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Ok(Event::Empty(e)) => {
+                    let tag_name = e.name().as_ref().to_string();
+
+                    // Регистрируем только если мы уже внутри или заходим в Definition
+                    if tag_name == "Definition" || stack.contains(&"Definition".to_string()) {
+                        let path = format_path(&stack, &tag_name);
+                        let stats = schema.entry(path).or_default();
+                        stats.count += 1;
+
+                        {
+                            for attr in e.attributes().flatten() {
+                                let key = attr.key.as_ref();
+                                let val = &attr.value;
+                                stats.attributes.insert(format!("@{}={}", key, val));
+                            }
+                        }
+                    }
+                }
+
+                // Открывающие теги <Definition>, <Id>, <Components>
+                Ok(Event::Start(ref e)) => {
+                    let tag_name = e.name().as_ref().to_string();
+                    stack.push(tag_name.clone());
+
+                    // Фиксируем путь, только если мы внутри Definition (или это сам Definition)
+                    if stack.contains(&"Definition".to_string()) {
+                        let path = format_path(&stack[..stack.len() - 1], &tag_name);
+                        let stats = schema.entry(path).or_default();
+                        stats.count += 1;
+
+                        {
+                            for attr in e.attributes().flatten() {
+                                let key = attr.key.as_ref();
+                                let val = &attr.value;
+                                stats.attributes.insert(format!("@{}={}", key, val));
+                            }
+                        }
+                    }
+                }
+
+                // Текстовые узлы
+                Ok(Event::Text(ref e)) => {
+                    if stack.contains(&"Definition".to_string()) {
+                        let text = e.trim().to_string();
+                        if !text.is_empty() {
+                            let path = format!("{}/@text", build_relative_path(&stack));
+                            let stats = schema.entry(path).or_default();
+                            stats.count += 1;
+                            if stats.sample_values.len() < 5 {
+                                stats.sample_values.insert(text);
+                            }
+                        }
+                    }
+                }
+
+                // Закрывающие теги
+                Ok(Event::End(_)) => {
+                    stack.pop();
+                }
+
+                Ok(Event::Eof) => break println!("[LOG] Completed {}", stack.join("/")),
+                Err(e) => {
+                    eprintln!(
+                        "[ERROR] Ошибка парсинга на позиции {}: {:?}",
+                        reader.error_position(),
+                        e
+                    );
+                    eprintln!("Текущий путь (стек): {}", stack.join("/"));
+                    break;
+                }
+                _ => (),
+            }
+            buf.clear(); // КРИТИЧНО: очищаем буфер, чтобы память не утекала
+        }
+    }
+
+    // Хелпер: срезает внешнюю обертку (Definitions/CubeBlocks/...) оставляя относительный путь от Definition
+    fn build_relative_path(stack: &[String]) -> String {
+        if let Some(pos) = stack.iter().position(|s| s == "Definition") {
+            stack[pos..].join("/")
+        } else {
+            stack.join("/")
+        }
+    }
+
+    fn format_path(parent_stack: &[String], current_tag: &str) -> String {
+        let base = build_relative_path(parent_stack);
+        if base.is_empty() {
+            current_tag.to_string()
+        } else {
+            format!("{}/{}", base, current_tag)
+        }
+    }
 }

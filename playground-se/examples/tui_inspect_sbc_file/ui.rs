@@ -10,11 +10,7 @@ use crate::app::{App, InputMode};
 pub fn draw(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3),
-            Constraint::Min(0),
-            Constraint::Length(1),
-        ])
+        .constraints([Constraint::Length(3), Constraint::Min(0), Constraint::Length(1)])
         .split(frame.area());
 
     // Header with input
@@ -49,7 +45,7 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
         InputMode::Insert => " INSERT ",
     };
 
-    let input_text = app.file_path.clone();
+    let input_text = app.file_path.trim();
 
     let input = Paragraph::new(input_text)
         .block(
@@ -122,14 +118,11 @@ fn draw_definition_details(frame: &mut Frame, app: &App, area: Rect) {
 
     if let Some(def) = app.selected_definition() {
         let text = format_definition_details(def);
-        let paragraph = Paragraph::new(text)
-            .wrap(Wrap { trim: false })
-            .scroll((0, 0));
+        let paragraph = Paragraph::new(text).wrap(Wrap { trim: false }).scroll((0, 0));
 
         frame.render_widget(paragraph, inner_area);
     } else {
-        let placeholder = Paragraph::new("Select a block to view details")
-            .style(Style::default().fg(Color::Gray));
+        let placeholder = Paragraph::new("Select a block to view details").style(Style::default().fg(Color::Gray));
         frame.render_widget(placeholder, inner_area);
     }
 }
@@ -140,13 +133,26 @@ fn format_definition_details(def: &playground_se::types::Definition) -> String {
         format!("Type ID: {}", def.id.type_id),
         format!("Subtype ID: {}", def.id.subtype_id),
         format!("Cube Size: {}", def.cube_size),
-        format!("ModelOffset: [{}, {}, {}]", def.model_offset.x, def.model_offset.y, def.model_offset.z),
+        format!(
+            "ModelOffset: [{}, {}, {}]",
+            def.model_offset.x, def.model_offset.y, def.model_offset.z
+        ),
         format!("Block Topology: {}", def.block_topology),
         format!("Size: {}x{}x{}", def.size.x, def.size.y, def.size.z),
         format!("Block Pair Name: {}", def.block_pair_name),
         format!("Build Time: {}s", def.build_time_seconds),
         format!("Edge Type: {}", def.edge_type),
     ];
+
+    if let Some(mount_points) = &def.mount_points {
+        let formatted_mp = mount_points
+            .mount_points
+            .iter()
+            .map(|mp| mp.to_string())
+            .collect::<Vec<_>>()
+            .join("\n\t");
+        lines.push(format!("Mount Points: \n\t{}", formatted_mp));
+    }
 
     if let Some(model) = &def.model {
         lines.push(format!("Model: {}", model));
@@ -251,7 +257,10 @@ fn draw_suggestions_popup(frame: &mut Frame, app: &App) {
             .map(|(idx, item)| {
                 let icon = if item.is_dir { "📁" } else { "📄" };
                 let style = if idx == app.selected_suggestion {
-                    Style::default().bg(Color::Blue).fg(Color::White).add_modifier(Modifier::BOLD)
+                    Style::default()
+                        .bg(Color::Blue)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD)
                 } else if item.is_sbc {
                     Style::default().fg(Color::Green)
                 } else if item.is_dir {
@@ -259,7 +268,7 @@ fn draw_suggestions_popup(frame: &mut Frame, app: &App) {
                 } else {
                     Style::default()
                 };
-                
+
                 let text = format!("{} {}", icon, item.name);
                 ListItem::new(text).style(style)
             })
@@ -276,7 +285,7 @@ fn draw_suggestions_popup(frame: &mut Frame, app: &App) {
         // Create mutable state for the selected item
         let mut list_state = ratatui::widgets::ListState::default();
         list_state.select(Some(app.selected_suggestion));
-        
+
         frame.render_stateful_widget(list, chunks[1], &mut list_state);
     }
 
