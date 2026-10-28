@@ -1,3 +1,0 @@
-
-dev:
-	cargo run

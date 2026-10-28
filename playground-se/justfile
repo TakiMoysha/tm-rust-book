@@ -1,6 +1,7 @@
 
-dev *ARGS:
-    cargo run {{ ARGS }} --message-format=short
+# ex: just example tui_inspect_sbc_file
+example *ARGS:
+    cargo run --message-format=short --example {{ ARGS }} 
 
 spellcheck:
     aspell -a README.md
