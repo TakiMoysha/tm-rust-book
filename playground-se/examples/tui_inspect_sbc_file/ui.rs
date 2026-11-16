@@ -154,8 +154,27 @@ fn format_definition_details(def: &playground_se::types::Definition) -> String {
         lines.push(format!("Mount Points: \n\t{}", formatted_mp));
     }
 
-    if let Some(model) = &def.model {
-        lines.push(format!("Model: {}", model));
+    // Blocks like armor corners have no single model file: instead they describe
+    // their geometry through a CubeDefinition (topology + a model per side).
+    match def.model.as_deref().map(str::trim) {
+        Some(model) if !model.is_empty() => {
+            lines.push(format!("Model: {}", model));
+        }
+        _ => {
+            lines.push(String::from("Model: <none>"));
+            if let Some(cube_definition) = &def.cube_definition {
+                lines.push(String::from("\nCube Definition:"));
+                lines.push(format!("  Topology: {}", cube_definition.cube_topology));
+                lines.push(format!("  Show Edges: {}", cube_definition.show_edges));
+                lines.push(String::from("  Sides:"));
+                for (index, side) in cube_definition.sides.sides.iter().enumerate() {
+                    lines.push(format!(
+                        "    [{}] {} (pattern: {}x{})",
+                        index, side.model, side.pattern_width, side.pattern_height
+                    ));
+                }
+            }
+        }
     }
 
     if let Some(critical) = &def.critical_component {
@@ -333,3 +352,4 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         ])
         .split(popup_layout[1])[1]
 }
+

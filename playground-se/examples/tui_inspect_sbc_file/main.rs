@@ -10,9 +10,7 @@ use std::{
 use anyhow::Context;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
-use crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
-};
+use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
@@ -22,7 +20,7 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
-struct ArgumentsParser {
+struct Cli {
     init_file: Option<String>,
 }
 
@@ -34,7 +32,7 @@ fn main() -> anyhow::Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(out_pipe))?;
 
     // parse args
-    let args = ArgumentsParser::parse();
+    let args = Cli::parse();
 
     // init app
     let mut app = if let Some(init_file) = args.init_file {

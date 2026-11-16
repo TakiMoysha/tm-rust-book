@@ -1,6 +1,6 @@
 
-# ex: just example tui_inspect_sbc_file
-example *ARGS:
+# ex: just examples tui_inspect_sbc_file
+examples *ARGS:
     cargo run --message-format=short --example {{ ARGS }} 
 
 spellcheck:
