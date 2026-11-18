@@ -1,0 +1,11 @@
+[package]
+name = "gpui-model-preivew"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gpui-kit = { version = "0.10.0", features = ["assets"] }
+wgpu = "30.0.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+log = "0.4"
+threers = "0.1.0"
