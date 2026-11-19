@@ -1,0 +1,14 @@
+# or u gpu index
+export ZED_DEVICE_ID := "1f11"
+
+# ex: just bin grid_example -- --model assets/heavy_model.fbx --copies 30
+bin bin_name *ARGS:
+    cargo run --release --bin {{ bin_name }} {{ ARGS }}
+
+# just snapshot, or: just snapshot --model assets/example.fbx
+snapshot *ARGS:
+    cargo run --release -- --snapshot preview.png {{ ARGS }}
+
+# just bench, or: just bench --no-model
+bench *ARGS:
+    cargo run --release -- --bench {{ ARGS }}

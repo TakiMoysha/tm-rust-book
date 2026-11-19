@@ -1,0 +1,15 @@
+[package]
+name = "gpui-model-preview"
+version = "0.1.0"
+edition = "2024"
+default-run = "gpui-model-preview"
+
+[dependencies]
+gpui-kit = { version = "0.10.0", features = ["assets"] }
+wgpu = "30.0.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+log = "0.4"
+pollster = "1.0.3"
+# Only the FBX loader and its data types: the renderer, audio and captions
+# features would pull in winit and a second rendering stack we do not use.
+threers = { version = "0.1.0", default-features = false }

@@ -115,11 +115,8 @@ impl OrbitCamera {
 
     /// Zooms in or out, keeping the distance sane.
     pub fn zoom(&mut self, factor: f32) {
-        self.distance = (self.distance * factor).clamp(3.0, 20.0);
-    }
-
-    pub fn reset(&mut self) {
-        *self = Self::default();
+        // The upper bound has to clear the distance a field of copies needs.
+        self.distance = (self.distance * factor).clamp(1.0, 200.0);
     }
 
     fn basis(&self) -> Basis {
@@ -152,6 +149,28 @@ impl Basis {
     fn to_view(&self, point: Vec3) -> Vec3 {
         let offset = point - self.eye;
         Vec3::new(self.right.dot(offset), self.up.dot(offset), -self.forward.dot(offset))
+    }
+}
+
+/// The camera position and orientation for the current orbit state. The GPU
+/// backend needs the same basis the rasterizer uses.
+pub struct CameraFrame {
+    pub eye: Vec3,
+    pub right: Vec3,
+    pub up: Vec3,
+    /// Unit vector from `eye` towards `target`.
+    pub forward: Vec3,
+}
+
+impl OrbitCamera {
+    pub fn frame(&self) -> CameraFrame {
+        let basis = self.basis();
+        CameraFrame {
+            eye: basis.eye,
+            right: basis.right,
+            up: basis.up,
+            forward: basis.forward,
+        }
     }
 }
 
@@ -190,7 +209,76 @@ impl Scene {
         self.push_triangle(a, b, c);
         self.push_triangle(a, c, d);
     }
+
+    /// Repeats the soup as a grid of copies on the ground — a copy of every
+    /// triangle per cell, no instancing. Returns the merged scene and the
+    /// width of the grid, which is what a camera needs to frame it.
+    ///
+    /// The grid is square-ish and centred on the origin; the copies keep their
+    /// own positions inside a cell, so a copy is never cut in half.
+    pub fn repeat(&self, copies: usize, spacing: f32) -> (Scene, f32) {
+        let copies = copies.max(1);
+        let columns = (copies as f32).sqrt().ceil() as usize;
+        let rows = copies.div_ceil(columns);
+
+        let mut scene = Scene::default();
+        scene.triangles.reserve(self.triangles.len() * copies);
+
+        for index in 0..copies {
+            let column = index % columns;
+            let row = index / columns;
+            let dx = (column as f32 - (columns - 1) as f32 * 0.5) * spacing;
+            let dz = (row as f32 - (rows - 1) as f32 * 0.5) * spacing;
+
+            for triangle in &self.triangles {
+                scene.push_triangle(
+                    shift(triangle.a, dx, dz),
+                    shift(triangle.b, dx, dz),
+                    shift(triangle.c, dx, dz),
+                );
+            }
+        }
+
+        (scene, columns.max(rows) as f32 * spacing)
+    }
+
+    /// Stretches the stage in the ground plane so the disc and the grid still
+    /// cover a field of copies. Height is left alone.
+    pub fn widen_stage(&mut self, factor: f32) {
+        if factor <= 1.0 {
+            return;
+        }
+        for triangle in &mut self.triangles {
+            for vertex in [&mut triangle.a, &mut triangle.b, &mut triangle.c] {
+                vertex.position.x *= factor;
+                vertex.position.z *= factor;
+            }
+        }
+    }
 }
+
+fn shift(vertex: Vertex, dx: f32, dz: f32) -> Vertex {
+    Vertex {
+        position: Vec3::new(
+            vertex.position.x + dx,
+            vertex.position.y,
+            vertex.position.z + dz,
+        ),
+        ..vertex
+    }
+}
+
+/// Height of the stage disc and grid. Public so a loaded model can be dropped
+/// onto it.
+pub const GROUND_Y: f32 = -1.55;
+
+/// Cell size of the grid [`Scene::repeat`] builds. A model normalised by
+/// [`crate::model`] is 2.6 units across, so this leaves a small gap.
+pub const COPY_SPACING: f32 = 3.0;
+
+/// Width of the default stage. A field of copies wider than this widens the
+/// disc and the grid to match, so nothing stands in the void.
+pub const STAGE_SPAN: f32 = 10.0;
 
 /// Builds the demo scene: a torus knot floating above a lit ground grid.
 pub fn demo_scene(with_ground: bool) -> Scene {
@@ -284,7 +372,6 @@ fn add_torus_knot(scene: &mut Scene) {
 }
 
 fn add_ground(scene: &mut Scene, disc: bool, grid: bool) {
-    const GROUND_Y: f32 = -1.55;
     const DISC_RADIUS: f32 = 5.0;
     const DISC_SEGMENTS: usize = 64;
     const DISC_RINGS: usize = 12;
@@ -420,6 +507,9 @@ pub fn render(scene: &Scene, camera: &OrbitCamera, width: u32, height: u32) -> F
     let basis = camera.basis();
     let focal = 1.0 / (camera.fov_y * 0.5).tan();
     let focal_x = focal / (width as f32 / height as f32);
+    // Fog is relative to the framing, not to world units: a camera pulled back
+    // to see a field of copies must not turn the whole field into a silhouette.
+    let fog_density = 0.5 / camera.distance.max(1e-3);
 
     let mut drawn = 0;
     let mut polygon: Vec<ClipVertex> = Vec::with_capacity(4);
@@ -465,7 +555,7 @@ pub fn render(scene: &Scene, camera: &OrbitCamera, width: u32, height: u32) -> F
                 // Gouraud shading: lighting is evaluated once per vertex and
                 // interpolated across the triangle, which keeps the inner loop
                 // free of square roots and powers.
-                color: shade(vertex.color, world, normal, basis.eye, w),
+                color: shade(vertex.color, world, normal, basis.eye, w, fog_density),
             });
         }
         if projected.len() < 3 {
@@ -664,7 +754,14 @@ const FOG_COLOR: Vec3 = Vec3::new(0.012, 0.016, 0.028);
 
 /// A small studio rig: warm key light, cool fill light, specular highlight and
 /// a rim light that separates silhouettes from the background.
-fn shade(base: Vec3, world: Vec3, normal: Vec3, eye: Vec3, distance: f32) -> Vec3 {
+fn shade(
+    base: Vec3,
+    world: Vec3,
+    normal: Vec3,
+    eye: Vec3,
+    distance: f32,
+    fog_density: f32,
+) -> Vec3 {
     let n = normal.normalize();
     let view = (eye - world).normalize();
     let key = KEY_DIRECTION.normalize();
@@ -687,7 +784,7 @@ fn shade(base: Vec3, world: Vec3, normal: Vec3, eye: Vec3, distance: f32) -> Vec
     // Distant geometry sinks into the background so the grid does not end
     // abruptly at its edge.
     let fog = {
-        let t = distance * 0.06;
+        let t = distance * fog_density;
         t / (1.0 + t)
     };
     color = color.lerp(FOG_COLOR, fog);
